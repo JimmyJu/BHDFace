@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/llSdCarFile"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@+id/imgFile"
+        android:layout_width="@dimen/attribute_50_dp"
+        android:layout_height="@dimen/attribute_50_dp" />
+
+    <TextView
+        android:id="@+id/tvSDCardFileName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/gate_30_dp"
+        android:text="默认"
+        android:textColor="@color/finance_white"
+        android:textSize="@dimen/gate_20_sp" />
+</LinearLayout>
