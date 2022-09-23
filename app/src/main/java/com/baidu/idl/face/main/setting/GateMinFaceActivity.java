@@ -202,4 +202,9 @@ public class GateMinFaceActivity extends BaseActivity {
         showXLocation = (int) minRepresent.getX();
     }
 
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
+
 }

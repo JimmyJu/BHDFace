@@ -175,4 +175,9 @@ public class MirrorSettingActivity extends BaseActivity implements View.OnClickL
         showWidth = mirrorRepresent.getWidth();
         showXLocation = (int) mirrorRepresent.getX();
     }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
 }

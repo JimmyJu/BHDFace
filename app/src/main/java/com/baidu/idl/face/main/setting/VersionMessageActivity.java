@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.baidu.idl.face.main.activity.BaseActivity;
 import com.baidu.idl.face.main.manager.FaceSDKManager;
+import com.baidu.idl.face.main.utils.NetWorkUtils;
 import com.baidu.idl.face.main.utils.Utils;
 import com.baidu.idl.facesdkdemo.R;
 import com.baidu.idl.main.facesdk.FaceAuth;
@@ -26,6 +27,8 @@ public class VersionMessageActivity extends BaseActivity {
     private ImageView buttonVersionSave;
     private FaceAuth faceAuth;
 
+    private TextView current_device_ip, current_license_key;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +46,9 @@ public class VersionMessageActivity extends BaseActivity {
         activateType = findViewById(R.id.activatetype);
         activateData = findViewById(R.id.activatedata);
 
+        current_device_ip = findViewById(R.id.current_device_ip);
+        current_license_key = findViewById(R.id.current_license_key);
+
         sdkVersion.setText(Utils.getVersionName(this));
         systemVersion.setText(android.os.Build.VERSION.RELEASE);
         if (FaceSDKManager.initStatus != FaceSDKManager.SDK_MODEL_LOAD_SUCCESS) {
@@ -55,8 +61,21 @@ public class VersionMessageActivity extends BaseActivity {
         BDFaceLicenseAuthInfo bdFaceLicenseAuthInfo = faceAuth.getAuthInfo(this);
         Date dateLong = new Date(bdFaceLicenseAuthInfo.expireTime * 1000L);
         String dateTime = simpleDateFormat.format(dateLong);
-
         activateData.setText(dateTime);
+
+        //当前设备IP
+        String substringDeviceID = NetWorkUtils.getLocalIpAddress();
+        if (substringDeviceID != null) {
+            String newString = substringDeviceID.replace(".", "");
+            String newSubstringDeviceID = newString.substring(newString.length() - 6);
+
+//            current_device_ip.setText(substringDeviceID + getString(R.string.ip_info) + newSubstringDeviceID);
+            current_device_ip.setText(String.format(getString(R.string.ip_info),substringDeviceID,newSubstringDeviceID));
+        }
+
+        //当前许可证
+        current_license_key.setText(bdFaceLicenseAuthInfo.licenseKey);
+
         buttonVersionSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

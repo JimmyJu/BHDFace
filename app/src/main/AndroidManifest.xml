@@ -18,6 +18,8 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 开机自动允许	允许程序开机自动运行 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature
@@ -31,8 +33,8 @@
         android:required="true" />
 
     <application
-        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
@@ -44,12 +46,15 @@
             android:name="design_height_in_dp"
             android:value="1280" />
 
+        <activity
+            android:name="com.baidu.idl.face.main.activity.start.TranslucentActivity"
+            android:theme="@style/TranslucentStyle" />
         <activity android:name="com.baidu.idl.face.main.activity.start.ActivitionActivity" />
         <activity android:name="com.baidu.idl.face.main.activity.start.HomeActivity" />
         <activity android:name="com.baidu.idl.face.main.activity.start.SDCardFileImportOffline" />
         <activity android:name="com.baidu.idl.face.main.activity.start.SDCardFileImportOfflineCompare" />
         <activity android:name="com.baidu.idl.face.main.activity.start.StartSettingActivity" />
-
+        <activity android:name="com.baidu.idl.face.main.setting.OfflinePerationSettingActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.GateFaceDetectActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.VersionMessageActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.CameraDisplayAngleActivity" />
@@ -64,19 +69,29 @@
         <activity android:name="com.baidu.idl.face.main.setting.LogSettingActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.PictureOptimizationActivity" />
         <activity android:name="com.baidu.idl.face.main.activity.gate.FaceRGBGateActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.ServiceSettingActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.IpAddressActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.SDCardFileExplorerTestActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.OtherSettingActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.SDCardFileExplorerActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.RelayActivity" />
+
+
         <activity
             android:name="com.baidu.idl.face.main.activity.start.StartActivity"
             android:launchMode="singleTop">
-<!--            android:theme="@style/Theme_NoTitle">-->
-            <!--            android:theme="@style/Theme.AppCompat.Light.NoActionBar">-->
+
+            <!-- android:theme="@style/Theme_NoTitle"> -->
+            <!-- android:theme="@style/Theme.AppCompat.Light.NoActionBar"> -->
             <intent-filter>
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- 开机启动 -->
+        </activity> <!-- 开机启动 -->
         <receiver
             android:name="com.baidu.idl.face.main.service.BootReceiver"
             android:enabled="true"
@@ -88,9 +103,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </receiver>
-
-        <!-- 安全设备指纹接入 start -->
+        </receiver> <!-- 安全设备指纹接入 start -->
         <activity
             android:name="com.baidu.liantian.LiantianActivity"
             android:excludeFromRecents="true"
@@ -122,9 +135,7 @@
         <provider
             android:name="com.baidu.liantian.LiantianProvider"
             android:authorities="com.baidu.idl.face.demo.liantian.ac.provider"
-            android:exported="false" />
-
-        <!--        <service android:name="com.baidu.idl.face.main.socket.SocketService" />-->
+            android:exported="false" /> <!-- <service android:name="com.baidu.idl.face.main.socket.SocketService" /> -->
         <service
             android:name="com.baidu.liantian.LiantianService"
             android:exported="false">
@@ -136,12 +147,18 @@
             </intent-filter>
         </service>
 
+
+        <service
+            android:name="com.baidu.idl.face.main.service.TcpService"
+            android:enabled="true"
+            android:exported="false" />
+
         <meta-data
             android:name="seckey_avscan"
             android:value="660346260f8a841a04ec2a56815b421b" />
         <meta-data
             android:name="appkey_avscan"
-            android:value="100034" /> <!-- 安全设备指纹接入 end -->
+            android:value="100034" />
     </application>
 
 </manifest>

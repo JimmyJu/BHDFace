@@ -145,39 +145,15 @@ public class SDCardFileImportOffline extends BaseActivity {
 
                             for (HashMap.Entry<String, String> map : FileUtils.getImagePathFromSD(mContext, currentFiles[position].getName()).entrySet()) {
 
-                                String name = map.getKey().substring(0, map.getKey().length() - 4);
+                                String pic_name = map.getKey().substring(0, map.getKey().length() - 4);
+                                String[] parts = pic_name.split("-");
+                                String name = parts[0];
+                                //卡号
+                                String jobNumber = parts[1];
 
-//                                Bitmap bitmap = BitmapFactory.decodeFile(map.getValue());
                                 String imagePath = map.getValue();
                                 bitmap = BitmapFactory.decodeFile(imagePath);
 
-                               /* // 设置参数
-                                try {
-                                    BitmapFactory.Options options = new BitmapFactory.Options();
-                                    options.inJustDecodeBounds = true; // 只获取图片的大小信息，而不是将整张图片载入在内存中，避免内存溢出
-                                    BitmapFactory.decodeFile(imagePath, options);
-                                    int height = options.outHeight;
-                                    int width = options.outWidth;
-
-                                    int inSampleSize = 2; // 默认像素压缩比例，压缩为原图的1/2  1表示不缩放
-//                                    // 缩放比。由于是固定比例缩放，只用高或者宽其中一个数据进行计算即可
-
-
-                                    int minLen = Math.min(height, width); // 原图的最小边长
-                                    if (minLen > 200) { // 如果原始图像的最小边长大于100dp（此处单位我认为是dp，而非px）
-                                        float ratio = (float) minLen / 200.0f; // 计算像素压缩比例
-                                        inSampleSize = (int) ratio;
-                                    }
-                                    options.inJustDecodeBounds = false; // 计算好压缩比例后，这次可以去加载原图了
-                                    options.inSampleSize = inSampleSize; // 设置为刚才计算的压缩比例
-                                    bitmap = BitmapFactory.decodeFile(imagePath, options); // 解码文件
-//                                    Log.w("TAG", "卡号：" + name + " size: " + bitmap.getByteCount() + " width: " + bitmap.getWidth() + " heigth:" + bitmap.getHeight()); // 输出图像数据
-                                } catch (OutOfMemoryError e) {
-                                    ToastUtils.toast(SDCardFileImportOffline.this, "" + e.toString());
-                                }
-
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-                                byteArrayOutputStream.reset();*/
                                 if (bitmap != null) {
                                     Bitmap bitmap1;
                                     // 图片缩放
@@ -196,7 +172,6 @@ public class SDCardFileImportOffline extends BaseActivity {
                                         bitmap.recycle();
                                     }
 
-
                                     byte[] bytes = new byte[512];
                                     if (bitmap1 != null) {
 
@@ -207,14 +182,22 @@ public class SDCardFileImportOffline extends BaseActivity {
                                                 BDFaceSDKCommon.FeatureType.BDFACE_FEATURE_TYPE_LIVE_PHOTO);
 
                                         Log.i(TAG, "live_photo = " + result.getResult());
-                                        if (result.getResult() == -2) {
+                                        /*if (result.getResult() == -2) {
                                             Log.e(TAG, name + "-->未检测到人脸");
                                             ToastUtils.toast(SDCardFileImportOffline.this, name + "-->未检测到人脸");
-                                        } else if (result.getResult() == 128) {
+                                        } */
+                                        if (result.getResult() == 128) {
 
-                                            FaceApi.getInstance().registerUserIntoDBmanager(null, name, "", "11111111", bytes);
+                                            FaceApi.getInstance().registerUserIntoDBmanager(null, name, "", jobNumber, bytes);
 
+                                        } else {
+                                            Log.e(TAG, name + " 错误码：" + result.getResult());
                                         }
+
+                                        if (result.getBitmap() != null && !result.getBitmap().isRecycled()) {
+                                            result.getBitmap().recycle();
+                                        }
+
                                         // 图片回收
                                         if (!bitmap1.isRecycled()) {
                                             bitmap1.recycle();

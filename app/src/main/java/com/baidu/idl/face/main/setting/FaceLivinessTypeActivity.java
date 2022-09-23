@@ -716,4 +716,9 @@ public class FaceLivinessTypeActivity extends BaseActivity implements View.OnCli
         String resultNumber = decimalFormat.format(numberValue);
         return resultNumber;
     }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
 }

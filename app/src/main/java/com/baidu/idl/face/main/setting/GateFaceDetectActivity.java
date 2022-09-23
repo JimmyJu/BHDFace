@@ -502,4 +502,10 @@ public class GateFaceDetectActivity extends BaseActivity implements View.OnClick
     }
 
 
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
+
+
 }

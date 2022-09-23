@@ -325,4 +325,9 @@ public class CameraDisplayAngleActivity extends BaseActivity {
         super.onPause();
     }
 
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
+
 }

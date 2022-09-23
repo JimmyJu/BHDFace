@@ -89,4 +89,9 @@ public class LogSettingActivity extends BaseActivity {
         showWidth = groupFunLog.getWidth();
         showXLocation = (int) groupLog.getX();
     }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
 }

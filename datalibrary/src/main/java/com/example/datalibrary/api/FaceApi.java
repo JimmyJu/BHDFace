@@ -5,7 +5,6 @@ package com.example.datalibrary.api;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.example.datalibrary.db.DBManager;
 import com.example.datalibrary.listener.DBLoadListener;
@@ -37,12 +36,13 @@ public class FaceApi {
         return instance;
     }
 
-    public void  init(DBLoadListener dbLoadListener , Context context){
+    public void init(DBLoadListener dbLoadListener, Context context) {
 
         users = new ArrayList<>();
         DBManager.getInstance().init(context);
         DBManager.getInstance().queryAllUsers(dbLoadListener);
     }
+
 
     /**
      * 添加用户组
@@ -103,14 +103,14 @@ public class FaceApi {
         if (user == null || TextUtils.isEmpty(user.getGroupId())) {
             return false;
         }
-        Pattern pattern = Pattern.compile("^[0-9a-zA-Z_-]{1,}$");
+        /*Pattern pattern = Pattern.compile("^[0-9a-zA-Z_-]{1,}$");
         Matcher matcher = pattern.matcher(user.getUserId());
         if (!matcher.matches()) {
             return false;
-        }
+        }*/
         boolean ret = DBManager.getInstance().addUser(user);
         User newUser = DBManager.getInstance().queryUserByUserNameItem(user.getUserName());
-        users.add(0 , newUser);
+        users.add(0, newUser);
         return ret;
     }
 
@@ -118,10 +118,30 @@ public class FaceApi {
      * 查找所有用户
      */
     public synchronized List<User> getAllUserList() {
-            if (users == null && users.size() == 0){
-                users = DBManager.getInstance().queryAllUsers();
-            }
-            return users;
+        if (users == null && users.size() == 0) {
+            users = DBManager.getInstance().queryAllUsers();
+        }
+        return users;
+    }
+
+    /**
+     * 查找所有用户1
+     */
+    public synchronized List<User> getAllUserList1() {
+        return DBManager.getInstance().queryAllUsers();
+    }
+
+    //根据用户卡号 从库中查询卡号是否存在
+    public String getUserCardByUserCard(String UserInfo) {
+        if (TextUtils.isEmpty(UserInfo)) {
+            return null;
+        }
+        List<User> userList = DBManager.getInstance().queryUserByuserInfo(UserInfo);
+        if (userList != null && userList.size() > 0) {
+            String userInfo = userList.get(0).getUserInfo();
+            return userInfo.trim();
+        }
+        return "";
     }
 
     /**
@@ -141,17 +161,17 @@ public class FaceApi {
         if (TextUtils.isEmpty(userName)) {
             return null;
         }
-        if (users != null && users.size() > 0){
+        if (users != null && users.size() > 0) {
             List list = new ArrayList();
-            for (int i = 0 , k = users.size(); i < k; i++){
+            for (int i = 0, k = users.size(); i < k; i++) {
                 User user = users.get(i);
-                if (user.getUserName().indexOf(userName) != -1){
+                if (user.getUserName().indexOf(userName) != -1) {
                     user.setUserIndex(i);
                     list.add(user);
                 }
             }
             return list;
-        }else {
+        } else {
             return DBManager.getInstance().queryUserByUserNameVag(userName);
         }
     }
@@ -195,16 +215,18 @@ public class FaceApi {
     }
 
     /**
-     * 删除用户
+     * 删除单个用户信息
+     *
+     * @param userInfo 要删除的用户卡号
      */
-    public boolean userDelete(String userId) {
-        if (TextUtils.isEmpty(userId)) {
+    public boolean userDelete(String userInfo) {
+        if (TextUtils.isEmpty(userInfo)) {
             return false;
         }
-        boolean ret = DBManager.getInstance().deleteUser(userId);
-        if (ret){
-            for (int i = 0 , k = users.size(); i < k; i++){
-                if (users.get(i).getUserId().equals(userId)){
+        boolean ret = DBManager.getInstance().deleteUser(userInfo);
+        if (ret) {
+            for (int i = 0, k = users.size(); i < k; i++) {
+                if (users.get(i).getUserInfo().equals(userInfo)) {
                     users.remove(i);
                     break;
                 }
@@ -212,16 +234,17 @@ public class FaceApi {
         }
         return ret;
     }
+
     /**
      * 删除用户
      */
-    public boolean userDeletes(List<User> list , boolean isHave , DBLoadListener dbLoadListener) {
+    public boolean userDeletes(List<User> list, boolean isHave, DBLoadListener dbLoadListener) {
 //        boolean isUsers = list.equals(users) && ;
         int count = list.size();
         boolean isAllCover = true;
-        if (list.size() == users.size()){
-            for (int i = 0 , k = count; i < k; i++){
-                if (!list.get(i).isChecked()){
+        if (list.size() == users.size()) {
+            for (int i = 0, k = count; i < k; i++) {
+                if (!list.get(i).isChecked()) {
                     isAllCover = false;
                     break;
                 }
@@ -229,47 +252,48 @@ public class FaceApi {
         } else {
             isAllCover = false;
         }
-        if(isAllCover){
-            dbLoadListener.onLoad(count / 2 ,
-                    count , 0.5f);
+        if (isAllCover) {
+            dbLoadListener.onLoad(count / 2,
+                    count, 0.5f);
             users = new ArrayList<>();
             DBManager.getInstance().clearTable();
-            dbLoadListener.onComplete(null , count);
+            dbLoadListener.onComplete(null, count);
             return true;
         }
         boolean rets = true;
         int k = list.size();
         int i = 0;
         dbLoadListener.onStart(count);
-            while (i < k && !Thread.currentThread().isInterrupted() && isDelete){
-                User user = list.get(i);
-                int userId = user.getId();
-                if (list.get(i).isChecked()) {
-                    long time = System.currentTimeMillis();
-                    boolean ret = DBManager.getInstance().deleteUser(userId);
-                    if (ret){
-                        /*User user1 = */list.remove(user);
-                        if (isHave){
-                            users.remove(user);
-                        }
-                        k = list.size();
-                        if (dbLoadListener != null){
-                            dbLoadListener.onLoad(i + count - k ,
-                                    count , ((float) (i + count - k) / (float) count));
-                        }
-                    }else {
-                        rets = false;
-                        i++;
+        while (i < k && !Thread.currentThread().isInterrupted() && isDelete) {
+            User user = list.get(i);
+            int userId = user.getId();
+            if (list.get(i).isChecked()) {
+                long time = System.currentTimeMillis();
+                boolean ret = DBManager.getInstance().deleteUser(userId);
+                if (ret) {
+                    /*User user1 = */
+                    list.remove(user);
+                    if (isHave) {
+                        users.remove(user);
+                    }
+                    k = list.size();
+                    if (dbLoadListener != null) {
+                        dbLoadListener.onLoad(i + count - k,
+                                count, ((float) (i + count - k) / (float) count));
                     }
                 } else {
+                    rets = false;
                     i++;
                 }
+            } else {
+                i++;
             }
-        dbLoadListener.onComplete(null , count);
-            return rets;
+        }
+        dbLoadListener.onComplete(null, count);
+        return rets;
     }
 
-    public void userClean(){
+    public void userClean() {
 
         users = new ArrayList<>();
         DBManager.getInstance().clearTable();
@@ -284,9 +308,9 @@ public class FaceApi {
             return false;
         }
         boolean ret = DBManager.getInstance().userDeleteByName(userName);
-        if (ret){
-            for (int i = 0 , k = users.size(); i < k; i++){
-                if (users.get(i).getUserName().equals(userName)){
+        if (ret) {
+            for (int i = 0, k = users.size(); i < k; i++) {
+                if (users.get(i).getUserName().equals(userName)) {
                     users.remove(i);
                     break;
                 }
@@ -328,23 +352,25 @@ public class FaceApi {
         }
         return "0";
     }
-    public static boolean isSpotString(String str){
+
+    public static boolean isSpotString(String str) {
         int n = 0;
         String newStr = "";
-        for (int i = 0 , k = str.length(); i < k ; i++){
+        for (int i = 0, k = str.length(); i < k; i++) {
             char item = str.charAt(i);
-            if (isChinese(item)){
+            if (isChinese(item)) {
                 n += 2;
-            }else {
+            } else {
                 n += 1;
             }
-            if (n > 10){
+            if (n > 10) {
                 return false;
             }
             newStr += item;
         }
         return true;
     }
+
     public static boolean isChinese(char c) {
 
         return c >= 0x4E00 && c <= 0x9FA5; // 根据字节码判断
@@ -408,7 +434,7 @@ public class FaceApi {
         return num;
     }
 
-    public void clean(){
+    public void clean() {
         users = null;
     }
 

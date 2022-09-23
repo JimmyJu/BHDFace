@@ -195,6 +195,18 @@ public class BaseConfig {
     // nir人脸检测 0：RGB无镜像，1：有镜像
     private int mirrorDetectNIR = 0;
 
+    //继电器默认关闭时间 单位（秒）
+
+    private int relayTime = 3;
+
+    public int getRelayTime() {
+        return relayTime;
+    }
+
+    public void setRelayTime(int relayTime) {
+        this.relayTime = relayTime;
+    }
+
     public int getRgbDetectDirection() {
         return rgbDetectDirection;
     }

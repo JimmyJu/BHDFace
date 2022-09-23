@@ -3,11 +3,9 @@ package com.baidu.idl.face.main.activity.start;
 import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.TextureView;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -15,19 +13,18 @@ import android.widget.Toast;
 
 import com.baidu.idl.face.main.activity.BaseActivity;
 import com.baidu.idl.face.main.activity.FaceSDKManager;
-import com.baidu.idl.face.main.activity.gate.FaceRGBGateActivity;
 import com.baidu.idl.face.main.listener.SdkInitListener;
-import com.baidu.idl.face.main.model.SingleBaseConfig;
+import com.baidu.idl.face.main.service.TcpService;
 import com.baidu.idl.face.main.utils.GateConfigUtils;
 import com.baidu.idl.face.main.utils.LiveDataBus;
 import com.baidu.idl.face.main.utils.ToastUtils;
-import com.baidu.idl.face.main.view.PreviewTexture;
+import com.baidu.idl.face.main.utils.Utils;
 import com.baidu.idl.facesdkdemo.R;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.RegisterConfigUtils;
-import com.baidu.idl.main.facesdk.utils.StreamUtil;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.listener.DBLoadListener;
 import com.example.datalibrary.model.User;
+import com.example.yfaceapi.GPIOManager;
 
 import java.util.List;
 import java.util.Timer;
@@ -44,12 +41,7 @@ public class StartActivity extends BaseActivity {
     private ProgressBar progressBar;
     private TextView progressText;
     private View progressGroup;
-    private PreviewTexture[] previewTextures;
-    private Camera[] mCamera;
-    private TextureView checkRBGTexture;
-    private TextureView checkNIRTexture;
-    private static final int PREFER_WIDTH = 640;
-    private static final int PREFER_HEIGHT = 480;
+    private Intent mIntent;
 
 
     @Override
@@ -73,8 +65,8 @@ public class StartActivity extends BaseActivity {
         }
 
         initView();
+        //激活
         initLicense();
-
     }
 
 
@@ -83,29 +75,34 @@ public class StartActivity extends BaseActivity {
         progressText = findViewById(R.id.progress_text);
         progressGroup = findViewById(R.id.progress_group);
 
-        checkRBGTexture = findViewById(R.id.check_rgb_texture);
-        checkNIRTexture = findViewById(R.id.check_nir_texture);
-
-
         //接收激活后的状态
         LiveDataBus.get().with("ActiveState", Boolean.class).observe(this, (Observer<Boolean>) flag -> {
             if (flag) {
                 //开启服务
-                Log.e("TAG", "开启服务: " );
+                Log.e("TAG", "开启服务: ");
                 openService();
             }
         });
     }
 
     private void openService() {
-
-        initRGBCheck();
+        //db初始化
         initDBApi();
+        //注册库初始化
+        initListener();
+
+        //开启socket以及串口，先判断防止重复开启服务
+        if (!Utils.isServiceRunning(mContext, "com.baidu.idl.face.main.service.TcpService")) {
+            mIntent = new Intent(StartActivity.this, TcpService.class);
+            startService(mIntent);
+        }
 
         //加载FaceRGBGateActivity
         mHandler.postDelayed(() -> {
-            startActivity(new Intent(StartActivity.this, FaceRGBGateActivity.class));
-        }, 10 * 1000);
+//            startActivity(new Intent(StartActivity.this, FaceRGBGateActivity.class));
+            startActivity(new Intent(StartActivity.this, TranslucentActivity.class));
+
+        }, 8 * 1000);
     }
 
     private void initLicense() {
@@ -247,96 +244,54 @@ public class StartActivity extends BaseActivity {
     }
 
 
-    private void initRGBCheck() {
-        if (isSetCameraId()) {
-            return;
-        }
-        int mCameraNum = Camera.getNumberOfCameras();
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
-            Camera.getCameraInfo(i, cameraInfo);
-        }
-        if (mCameraNum > 1) {
-            try {
-                mCamera = new Camera[mCameraNum];
-                previewTextures = new PreviewTexture[mCameraNum];
-                mCamera[0] = Camera.open(0);
-                previewTextures[0] = new PreviewTexture(this, checkRBGTexture);
-                previewTextures[0].setCamera(mCamera[0], PREFER_WIDTH, PREFER_HEIGHT);
-                mCamera[0].setPreviewCallback(new Camera.PreviewCallback() {
-                    @Override
-                    public void onPreviewFrame(byte[] data, Camera camera) {
-                        int check = StreamUtil.checkNirRgb(data, PREFER_WIDTH, PREFER_HEIGHT);
-                        if (check == 1) {
-                            setRgbCameraId(0);
-                        }
-                        release(0);
+    //
+    private void initListener() {
+        if (com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.initStatus != com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.SDK_MODEL_LOAD_SUCCESS) {
+            com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.getInstance().initModel(this, new com.baidu.idl.main.facesdk.registerlibrary.user.listener.SdkInitListener() {
+                @Override
+                public void initStart() {
+                }
+
+                @Override
+                public void initLicenseSuccess() {
+                }
+
+                @Override
+                public void initLicenseFail(int errorCode, String msg) {
+                }
+
+                @Override
+                public void initModelSuccess() {
+                    com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.initModelSuccess = true;
+                    com.baidu.idl.main.facesdk.registerlibrary.user.utils.ToastUtils.toast(mContext, "模型加载成功，欢迎使用");
+                }
+
+                @Override
+                public void initModelFail(int errorCode, String msg) {
+                    com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.initModelSuccess = false;
+                    if (errorCode != -12) {
+                        com.baidu.idl.main.facesdk.registerlibrary.user.utils.ToastUtils.toast(mContext, "模型加载失败，请尝试重启应用");
                     }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                mCamera[1] = Camera.open(1);
-                previewTextures[1] = new PreviewTexture(this, checkNIRTexture);
-                previewTextures[1].setCamera(mCamera[1], PREFER_WIDTH, PREFER_HEIGHT);
-                mCamera[1].setPreviewCallback(new Camera.PreviewCallback() {
-                    @Override
-                    public void onPreviewFrame(byte[] data, Camera camera) {
-                        int check = StreamUtil.checkNirRgb(data, PREFER_WIDTH, PREFER_HEIGHT);
-                        if (check == 1) {
-                            setRgbCameraId(1);
-                        }
-                        release(1);
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            setRgbCameraId(0);
+                }
+            });
         }
     }
 
-    private void setRgbCameraId(int index) {
-        SingleBaseConfig.getBaseConfig().setRBGCameraId(index);
-        com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().setRBGCameraId(index);
-        GateConfigUtils.modityJson();
-
-    }
-
-    private boolean isSetCameraId() {
-        if (SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1 ||
-                com.baidu.idl.main.facesdk.registerlibrary.user.model.
-                        SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    private void release(int id) {
-        if (mCamera != null && mCamera[id] != null) {
-            if (mCamera[id] != null) {
-                mCamera[id].setPreviewCallback(null);
-                mCamera[id].stopPreview();
-                previewTextures[id].release();
-                mCamera[id].release();
-                mCamera[id] = null;
-            }
-        }
-    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        release(0);
-        release(1);
 
         if (future != null && !future.isDone()) {
             future.cancel(true);
         }
         FaceApi.getInstance().cleanRecords();
+
+        GPIOManager.getInstance(this).pullDownRedLight();
+        GPIOManager.getInstance(this).pullDownGreenLight();
+        GPIOManager.getInstance(this).pullDownWhiteLight();
+
+        stopService(mIntent);
     }
 
     @Override

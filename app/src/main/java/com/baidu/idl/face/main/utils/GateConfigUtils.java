@@ -148,6 +148,8 @@ public class GateConfigUtils {
             SingleBaseConfig.getBaseConfig().setMirrorDetectNIR(jsonObject.getInt("mirrorDetectNIR"));
             SingleBaseConfig.getBaseConfig().setRBGCameraId(jsonObject.getInt("rbgCameraId"));
 
+            SingleBaseConfig.getBaseConfig().setRelayTime(jsonObject.getInt("relayTime"));
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -329,6 +331,13 @@ public class GateConfigUtils {
                 return false;
             }
 
+
+            int relayTime = Integer.valueOf(jsonObject.get("relayTime") + "");
+            if (relayTime < 0 || relayTime > 20) {
+                return false;
+            }
+
+
             int rgbAndNirWidth = jsonObject.getInt("rgbAndNirWidth");
             int rgbAndNirHeight = jsonObject.getInt("rgbAndNirHeight");
             int depthWidth = jsonObject.getInt("depthWidth");
@@ -415,6 +424,8 @@ public class GateConfigUtils {
             jsonObject.put("nirDetectDirection", SingleBaseConfig.getBaseConfig().getNirDetectDirection());
             jsonObject.put("mirrorDetectNIR", SingleBaseConfig.getBaseConfig().getMirrorDetectNIR());
             jsonObject.put("rbgCameraId", SingleBaseConfig.getBaseConfig().getRBGCameraId());
+
+            jsonObject.put("relayTime", SingleBaseConfig.getBaseConfig().getRelayTime());
 
             // 修改内容写入配置文件
             FileUtils.writeTxtFile(jsonObject.toString(), filePath);

@@ -33,7 +33,7 @@
                         android:layout_height="@dimen/dp_30"
                         android:layout_marginLeft="30dp"
                         android:scaleType="centerInside"
-                        android:src="@mipmap/ic_return"></ImageView>
+                        android:src="@mipmap/ic_return" />
                 </LinearLayout>
 
                 <TextView
@@ -42,16 +42,16 @@
                     android:gravity="center"
                     android:text="设置"
                     android:textColor="@color/gate_white"
-                    android:textSize="25sp"></TextView>
+                    android:textSize="25sp" />
             </RelativeLayout>
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="0.3dp"
-            android:background="#333333"></View>
+            android:background="#333333" />
 
-        <View style="@style/configViewtyle"></View>
+        <View style="@style/configViewtyle" />
 
 
         <LinearLayout
@@ -86,7 +86,7 @@
 
                             <TextView
                                 style="@style/configTextStyle"
-                                android:text="@string/gate_face_detection"></TextView>
+                                android:text="@string/gate_face_detection" />
 
                             <LinearLayout style="@style/configInnerImageLayout">
 
@@ -106,7 +106,7 @@
 
                             <TextView
                                 style="@style/configTextStyle"
-                                android:text="@string/gate_quality_inspection"></TextView>
+                                android:text="@string/gate_quality_inspection" />
 
                             <LinearLayout style="@style/configInnerImageLayout">
 
@@ -114,9 +114,9 @@
                                     android:id="@+id/tvSettingQualtify"
                                     style="@style/configTextStyleTwo"
                                     android:layout_marginRight="10dp"
-                                    android:text="开启"></TextView>
+                                    android:text="开启" />
 
-                                <ImageView style="@style/configInnerImage"></ImageView>
+                                <ImageView style="@style/configInnerImage" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -132,7 +132,7 @@
 
                             <TextView
                                 style="@style/configTextStyle"
-                                android:text="@string/gate_huoti_detection"></TextView>
+                                android:text="@string/gate_huoti_detection" />
 
                             <LinearLayout style="@style/configInnerImageLayout">
 
@@ -140,9 +140,9 @@
                                     android:id="@+id/tvSettingLiviness"
                                     style="@style/configTextStyleTwo"
                                     android:layout_marginRight="10dp"
-                                    android:text="开启"></TextView>
+                                    android:text="开启" />
 
-                                <ImageView style="@style/configInnerImage"></ImageView>
+                                <ImageView style="@style/configInnerImage" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -164,7 +164,7 @@
 
                                 <TextView
                                     style="@style/configTextStyle"
-                                    android:text="@string/gate_face_recognition"></TextView>
+                                    android:text="@string/gate_face_recognition" />
 
                                 <LinearLayout style="@style/configInnerImageLayout">
 
@@ -194,7 +194,7 @@
 
                         <TextView
                             style="@style/configTextStyle"
-                            android:text="@string/gate_picture_optimization"></TextView>
+                            android:text="@string/gate_picture_optimization" />
 
                         <LinearLayout style="@style/configInnerImageLayout">
 
@@ -215,7 +215,75 @@
 
                         <TextView
                             style="@style/configTextStyle"
-                            android:text="@string/gate_lens_settings"></TextView>
+                            android:text="@string/gate_lens_settings" />
+
+                        <LinearLayout style="@style/configInnerImageLayout">
+
+                            <ImageView style="@style/configInnerImage" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+
+                <View style="@style/configViewtyle" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/sr_liner_rectangle"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/offline_peration"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:background="@drawable/sr_liner_rectangle">
+
+                        <TextView
+                            style="@style/configTextStyle"
+                            android:text="离线操作" />
+
+                        <LinearLayout style="@style/configInnerImageLayout">
+
+                            <ImageView style="@style/configInnerImage" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.3dp"
+                        android:background="#333333" />
+                    <LinearLayout
+                        android:id="@+id/service_configuration"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:background="@drawable/sr_liner_rectangle">
+
+                        <TextView
+                            style="@style/configTextStyle"
+                            android:text="服务配置" />
+
+                        <LinearLayout style="@style/configInnerImageLayout">
+
+                            <ImageView style="@style/configInnerImage" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.3dp"
+                        android:background="#333333" />
+
+                    <LinearLayout
+                        android:id="@+id/other"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:background="@drawable/sr_liner_rectangle">
+
+                        <TextView
+                            style="@style/configTextStyle"
+                            android:text="其它" />
 
                         <LinearLayout style="@style/configInnerImageLayout">
 
@@ -242,7 +310,7 @@
 
                         <TextView
                             style="@style/configTextStyle"
-                            android:text="@string/gate_log_settings"></TextView>
+                            android:text="@string/gate_log_settings" />
 
                         <LinearLayout style="@style/configInnerImageLayout">
 
@@ -250,9 +318,9 @@
                                 android:id="@+id/logSettingQualtify"
                                 style="@style/configTextStyleTwo"
                                 android:layout_marginRight="10dp"
-                                android:text="开启"></TextView>
+                                android:text="开启" />
 
-                            <ImageView style="@style/configInnerImage"></ImageView>
+                            <ImageView style="@style/configInnerImage" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -273,7 +341,7 @@
 
                             <TextView
                                 style="@style/configTextStyle"
-                                android:text="版本信息"></TextView>
+                                android:text="版本信息" />
 
                             <LinearLayout style="@style/configInnerImageLayout">
 
@@ -281,9 +349,9 @@
                                     android:id="@+id/tvSettingEffectiveDate"
                                     style="@style/configTextStyleTwo"
                                     android:layout_marginRight="10dp"
-                                    android:text="有效期至2020-12-31日"></TextView>
+                                    android:text="有效期至2020-12-31日" />
 
-                                <ImageView style="@style/configInnerImage"></ImageView>
+                                <ImageView style="@style/configInnerImage" />
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
@@ -305,7 +373,7 @@
         android:layout_marginBottom="23dp"
         android:alpha="0.4"
         android:gravity="center_horizontal"
-        android:text="— 百度大脑技术支持 —"
+        android:text="— BHD —"
         android:textColor="#666666"
         android:textSize="@dimen/bottom_font" />
 

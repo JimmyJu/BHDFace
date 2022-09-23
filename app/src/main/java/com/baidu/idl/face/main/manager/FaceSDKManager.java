@@ -8,7 +8,6 @@ import com.baidu.idl.face.main.listener.SdkInitListener;
 import com.baidu.idl.face.main.model.GlobalSet;
 import com.baidu.idl.face.main.model.LivenessModel;
 import com.baidu.idl.face.main.model.SingleBaseConfig;
-import com.baidu.idl.face.main.utils.ToastUtils;
 import com.baidu.idl.main.facesdk.FaceAuth;
 import com.baidu.idl.main.facesdk.FaceDarkEnhance;
 import com.baidu.idl.main.facesdk.FaceDetect;
@@ -294,7 +293,8 @@ public class FaceSDKManager {
 
     public void initDataBases(Context context) {
         if (FaceApi.getInstance().getmUserNum() != 0) {
-            ToastUtils.toast(context, "人脸库加载中");
+//            ToastUtils.toast(context, "人脸库加载中");
+            Log.e("TAG", "initDataBases: 人脸库加载中");
         }
         isPush = false;
         emptyFrame();
@@ -308,7 +308,6 @@ public class FaceSDKManager {
      * 数据库发现变化时候，重新把数据库中的人脸信息添加到内存中，id+feature
      */
     public void initPush(final Context context) {
-
         if (future3 != null && !future3.isDone()) {
             future3.cancel(true);
         }
@@ -316,18 +315,40 @@ public class FaceSDKManager {
         future3 = es3.submit(new Runnable() {
             @Override
             public void run() {
-                synchronized (FaceApi.getInstance().getAllUserList()) {
-                    FaceSDKManager.getInstance().getFaceSearch().pushPersonFeatureList(
-                            FaceApi.getInstance().getAllUserList());
+                synchronized (FaceApi.getInstance().getAllUserList1()) {
+//                    FaceSDKManager.getInstance().getFaceSearch().pushPersonFeatureList(
+//                            FaceApi.getInstance().getAllUserList1());
 
+                    FaceSDKManager.getInstance().getFaceFeature().featurePush(FaceApi.getInstance().getAllUserList1());
                     if (FaceApi.getInstance().getmUserNum() != 0) {
-                        ToastUtils.toast(context, "人脸库加载成功");
+//                        ToastUtils.toast(context, "人脸库加载成功");
+                        Log.e("TAG", "initDataBases: 人脸库加载成功");
                     }
                     isPush = true;
                 }
             }
         });
     }
+
+    /**
+     * 刷新内存
+     */
+    private ExecutorService es4 = Executors.newSingleThreadExecutor();
+    private Future future4;
+
+    public void refreshMemory(Context context) {
+
+        if (future4 != null && !future3.isDone()) {
+            future4.cancel(true);
+        }
+        future4 = es4.submit(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+    }
+
 
     /**
      * 初始化配置

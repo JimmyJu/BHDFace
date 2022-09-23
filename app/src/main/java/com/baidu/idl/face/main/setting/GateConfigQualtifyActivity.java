@@ -787,5 +787,10 @@ public class GateConfigQualtifyActivity extends BaseActivity {
         showWidth = qcLinerFirst.getWidth();
         showXLocation = (int) linerGesture.getX();
     }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
 }
 

@@ -1,7 +1,9 @@
 package com.baidu.idl.face.main.setting;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -14,6 +16,7 @@ import com.baidu.idl.face.main.utils.PreferencesManager;
 import com.baidu.idl.facesdkdemo.R;
 import com.baidu.idl.main.facesdk.FaceAuth;
 import com.baidu.idl.main.facesdk.license.BDFaceLicenseAuthInfo;
+import com.example.yfaceapi.GPIOManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,6 +32,9 @@ public class GateSettingActivity extends BaseActivity implements View.OnClickLis
     private LinearLayout gateHuotiDetection;
     private LinearLayout gateFaceRecognition;
     private LinearLayout gateLensSettings;
+    private LinearLayout offline_peration;
+    private LinearLayout service_configuration;
+    private LinearLayout other;
     private View gatePictureOptimization;
     private View gateLogSettings;
     private TextView tvSettingQualtify;
@@ -38,10 +44,14 @@ public class GateSettingActivity extends BaseActivity implements View.OnClickLis
     private TextView tvSettingEffectiveDate;
     private FaceAuth faceAuth;
 
+    private Handler mHandler = new Handler();
+    private Context mContext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gate_setting);
+        mContext = this;
         init();
     }
 
@@ -68,6 +78,19 @@ public class GateSettingActivity extends BaseActivity implements View.OnClickLis
         // 图像优化
         gatePictureOptimization = findViewById(R.id.gate_picture_optimization);
         gatePictureOptimization.setOnClickListener(this);
+        //离线操作
+        offline_peration = findViewById(R.id.offline_peration);
+        offline_peration.setOnClickListener(this);
+
+        //服务配置
+        service_configuration = findViewById(R.id.service_configuration);
+        service_configuration.setOnClickListener(this);
+
+        //其它
+        other = findViewById(R.id.other);
+        other.setOnClickListener(this);
+
+
         // 日志设置
         gateLogSettings = findViewById(R.id.gate_log_settings);
         gateLogSettings.setOnClickListener(this);
@@ -112,6 +135,12 @@ public class GateSettingActivity extends BaseActivity implements View.OnClickLis
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        delayCloseLight();
+    }
+
+    @Override
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.gate_settting_back) {
@@ -138,13 +167,27 @@ public class GateSettingActivity extends BaseActivity implements View.OnClickLis
         } else if (id == R.id.configVersionMessage) {
             Intent intent = new Intent(GateSettingActivity.this, VersionMessageActivity.class);
             startActivity(intent);
-        } else if (id == R.id.gate_picture_optimization){
+        } else if (id == R.id.gate_picture_optimization) {
             Intent intent = new Intent(GateSettingActivity.this, PictureOptimizationActivity.class);
             startActivity(intent);
         } else if (id == R.id.gate_log_settings) {
             Intent intent = new Intent(GateSettingActivity.this, LogSettingActivity.class);
             startActivity(intent);
+        } else if (id == R.id.offline_peration) {
+            startActivity(new Intent(GateSettingActivity.this, OfflinePerationSettingActivity.class));
+        } else if (id == R.id.service_configuration) {
+            startActivity(new Intent(GateSettingActivity.this, ServiceSettingActivity.class));
+        } else if (id == R.id.other) {
+            startActivity((new Intent(GateSettingActivity.this, OtherSettingActivity.class)));
         }
+    }
+
+    private void delayCloseLight() {
+        mHandler.postDelayed(() -> {
+            GPIOManager.getInstance(mContext).pullDownRedLight();
+            GPIOManager.getInstance(mContext).pullDownGreenLight();
+            GPIOManager.getInstance(mContext).pullDownWhiteLight();
+        }, 2000);
     }
 
 

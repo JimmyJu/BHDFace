@@ -8,7 +8,7 @@
         android:id="@+id/switchPort"
         android:layout_width="@dimen/dp_67"
         android:layout_height="@dimen/dp_29"
-        android:layout_marginStart="@dimen/dp_25"
+        android:layout_marginStart="@dimen/dp_15"
         android:layout_marginTop="@dimen/dp_15"
         android:src="@mipmap/logo" />
 

@@ -119,4 +119,9 @@ public class PictureOptimizationActivity extends BaseActivity {
         showWidth = groupFundarkEnhance.getWidth();
         showXLocation = (int) groupdarkEnhance.getX();
     }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
 }

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    >
+
+    <LinearLayout
+        android:id="@+id/linerbarquality"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/qc_save"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_marginLeft="30dp"
+                    android:background="@mipmap/ic_return"
+                    android:scaleType="centerInside"
+                    android:textColor="#ffffff" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="门禁服务配置"
+                android:textColor="@color/gate_white"
+                android:textSize="25sp" />
+        </RelativeLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dp_15"
+        android:background="@drawable/sr_liner_rectangle"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/ip_port_show"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_44"
+            android:gravity="center"
+            android:textSize="@dimen/dp_18"
+            android:textColor="@color/gate_white"
+            tools:text="当前服务器:192.168.1.108" />
+
+        <Button
+            android:layout_gravity="center"
+            android:id="@+id/ip_change"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="修改服务地址" />
+
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

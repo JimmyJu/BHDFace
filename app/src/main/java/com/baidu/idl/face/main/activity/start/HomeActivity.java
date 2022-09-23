@@ -451,7 +451,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 startActivity(new Intent(HomeActivity.this, UserManagerActivity.class));
                 break;
             case R.id.home_gateRl:
-//                mLiveType = com.baidu.idl.main.facesdk.model.SingleBaseConfig.getBaseConfig().getType();
+                mLiveType = SingleBaseConfig.getBaseConfig().getType();
                 // 闸机模块
 //                judgeLiveType(mLiveType,
 //                        FaceRGBGateActivity.class,
@@ -485,10 +485,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 break;
             }
 
-            case 2: { // NIR活体
-                startActivity(new Intent(HomeActivity.this, nirCls));
-                break;
-            }
+//            case 2: { // NIR活体
+//                startActivity(new Intent(HomeActivity.this, nirCls));
+//                break;
+//            }
 
 //            case 3: { // 深度活体
 //                int cameraType = SingleBaseConfig.getBaseConfig().getCameraType();
@@ -521,9 +521,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 break;
             }
 
-            default:
-                startActivity(new Intent(HomeActivity.this, depthCls));
-                break;
+//            default:
+//                startActivity(new Intent(HomeActivity.this, depthCls));
+//                break;
         }
     }
 

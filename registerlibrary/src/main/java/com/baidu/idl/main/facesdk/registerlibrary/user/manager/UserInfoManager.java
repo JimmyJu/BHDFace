@@ -1,8 +1,11 @@
 package com.baidu.idl.main.facesdk.registerlibrary.user.manager;
 
 
-import com.example.datalibrary.api.FaceApi;
+import android.util.Log;
+
+import com.baidu.idl.main.facesdk.registerlibrary.user.callback.RemoveStaffCallback;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.LogUtils;
+import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.listener.DBLoadListener;
 import com.example.datalibrary.model.User;
 
@@ -20,6 +23,9 @@ public class UserInfoManager {
     private static final String TAG = UserInfoManager.class.getSimpleName();
     private ExecutorService mExecutorService = null;
     private Future future;
+
+    private RemoveStaffCallback removeStaffCallback;
+
     // 私有构造
     private UserInfoManager() {
         if (mExecutorService == null) {
@@ -51,7 +57,7 @@ public class UserInfoManager {
     /**
      * 删除用户列表信息
      */
-    public void deleteUserListInfo(final List<User> list , final String userName,
+    public void deleteUserListInfo(final List<User> list, final String userName,
                                    final UserInfoListener listener, final DBLoadListener dbLoadListener) {
         future = mExecutorService.submit(new Runnable() {
             @Override
@@ -65,7 +71,7 @@ public class UserInfoManager {
                     return;
                 }
                 FaceApi.getInstance().isDelete = true;
-                FaceApi.getInstance().userDeletes(list , userName != null && !"".equals(userName) , dbLoadListener);
+                FaceApi.getInstance().userDeletes(list, userName != null && !"".equals(userName), dbLoadListener);
                 FaceApi.getInstance().isDelete = false;
                 listener.userListDeleteSuccess();
             }
@@ -94,6 +100,38 @@ public class UserInfoManager {
         });
     }
 
+
+    /**
+     * 删除单个用户信息
+     *
+     * @param userInfo 要删除的用户卡号
+     */
+    public void deleteUserInfo(final String userInfo) {
+        mExecutorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                boolean success = FaceApi.getInstance().userDelete(userInfo);
+                Log.e(TAG, "run: success" + success);
+                /*if (success) {
+                    Log.e(TAG, "removeStaff成功 " + userInfo);
+                } else {
+                    Log.e(TAG, "removeStaff失败 " + userInfo);
+                }*/
+
+
+                if (success) {
+                    if (removeStaffCallback != null) {
+                        removeStaffCallback.removeStaffSuccess();
+                    }
+                } else {
+                    if (removeStaffCallback != null) {
+                        removeStaffCallback.removeStaffFailure();
+                    }
+                }
+            }
+        });
+    }
+
     public static class UserInfoListener {
 
         public void userListQuerySuccess(String userName, List<User> listUserInfo) {
@@ -111,5 +149,13 @@ public class UserInfoManager {
         public void userListDeleteFailure(String message) {
             // 用户列表删除失败
         }
+    }
+
+    public RemoveStaffCallback getRemoveStaffCallback() {
+        return removeStaffCallback;
+    }
+
+    public void setRemoveStaffCallback(RemoveStaffCallback removeStaffCallback) {
+        this.removeStaffCallback = removeStaffCallback;
     }
 }

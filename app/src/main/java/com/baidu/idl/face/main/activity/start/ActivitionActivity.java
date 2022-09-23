@@ -333,6 +333,8 @@ public class ActivitionActivity extends BaseActivity implements View.OnClickList
                     String et_three = activity_et_three.getText().toString().trim();
                     String et_four = activity_et_four.getText().toString().trim();
                     end = et_one + "-" + et_two + "-" + et_three + "-" + et_four;
+                    //临时测试
+//                    end = "BDAB-GAR2-GBSX-CYPX";
 
 
                 }

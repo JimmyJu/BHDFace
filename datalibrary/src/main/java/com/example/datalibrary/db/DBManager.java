@@ -4,7 +4,6 @@ package com.example.datalibrary.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
@@ -287,6 +286,50 @@ public class DBManager {
             endTransaction(mDatabase);
         }
         return true;
+    }
+
+
+    /**
+     * 查询用户（userInfo 卡号）
+     */
+    public List<User> queryUserByuserInfo(String userInfo) {
+        Cursor cursor = null;
+        List<User> users = new ArrayList<>();
+        try {
+            if (mDBHelper == null) {
+                return null;
+            }
+            SQLiteDatabase db = mDBHelper.getReadableDatabase();
+            String where = "user_info = ? and group_id = ? ";
+            String[] whereValue = {userInfo, GROUP_ID};
+            cursor = db.query(DBHelper.TABLE_USER, null, where, whereValue, null, null, null);
+            if (cursor != null && cursor.getCount() > 0 && cursor.moveToNext()) {
+                int dbId = cursor.getInt(cursor.getColumnIndex("_id"));
+                String userId = cursor.getString(cursor.getColumnIndex("user_id"));
+                String userName = cursor.getString(cursor.getColumnIndex("user_name"));
+                String faceToken = cursor.getString(cursor.getColumnIndex("face_token"));
+                byte[] feature = cursor.getBlob(cursor.getColumnIndex("feature"));
+                String imageName = cursor.getString(cursor.getColumnIndex("image_name"));
+                long updateTime = cursor.getLong(cursor.getColumnIndex("update_time"));
+                long ctime = cursor.getLong(cursor.getColumnIndex("ctime"));
+
+                User user = new User();
+                user.setId(dbId);
+                user.setUserId(userId);
+                user.setGroupId(GROUP_ID);
+                user.setUserName(userName);
+                user.setCtime(ctime);
+                user.setUpdateTime(updateTime);
+                user.setUserInfo(userInfo);
+                user.setFeature(feature);
+                user.setImageName(imageName);
+                user.setFaceToken(faceToken);
+                users.add(user);
+            }
+        } finally {
+            closeCursor(cursor);
+        }
+        return users;
     }
 
     /**
@@ -693,17 +736,18 @@ public class DBManager {
         return success;
     }
     /**
-     * 删除用户
+     * 删除单个用户信息
+     * @param userInfo 要删除的用户卡号
      */
-    public boolean deleteUser(String userId) {
+    public boolean deleteUser(String userInfo) {
         boolean success = false;
         try {
             mDatabase = mDBHelper.getWritableDatabase();
             beginTransaction(mDatabase);
 
-            if (!TextUtils.isEmpty(userId)) {
-                String where = "user_id = ? and group_id = ?";
-                String[] whereValue = {userId, GROUP_ID};
+            if (!TextUtils.isEmpty(userInfo)) {
+                String where = "user_info = ? and group_id = ?";
+                String[] whereValue = {userInfo, GROUP_ID};
 
                 if (mDatabase.delete(DBHelper.TABLE_USER, where, whereValue) < 0) {
                     return false;

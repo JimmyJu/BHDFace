@@ -78,4 +78,9 @@ public class GateLensSettingsActivity extends BaseActivity implements View.OnCli
             finish();
         }
     }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
 }
