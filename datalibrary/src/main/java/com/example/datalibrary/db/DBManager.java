@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.example.datalibrary.listener.DBLoadListener;
 import com.example.datalibrary.model.Group;
+import com.example.datalibrary.model.QR;
 import com.example.datalibrary.model.User;
 
 import java.util.ArrayList;
@@ -807,6 +808,133 @@ public class DBManager {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         database.execSQL("delete from " + DBHelper.TABLE_USER);
     }
+
+
+
+    //-----------------------------二维码部分 start---------------------------------
+
+    /**
+     * 添加QR
+     */
+    public boolean addQR(QR qr) {
+        if (mDBHelper == null) {
+            return false;
+        }
+        try {
+            mDatabase = mDBHelper.getWritableDatabase();
+            beginTransaction(mDatabase);
+
+            ContentValues cv = new ContentValues();
+            cv.put("qr_name", qr.getQrName());
+            cv.put("qr_card", qr.getQrCard());
+            cv.put("qr_floor", qr.getQrfloor());
+            cv.put("ctime", System.currentTimeMillis());
+            cv.put("update_time", System.currentTimeMillis());
+
+            long rowId = mDatabase.insert(DBHelper.TABLE_USER_QR, null, cv);
+            if (rowId < 0) {
+                return false;
+            }
+
+            setTransactionSuccessful(mDatabase);
+            Log.i(TAG, "插入 userQR 成功:" + rowId);
+        } catch (Exception e) {
+            Log.e(TAG, "addUser e = " + e.getMessage());
+            return false;
+        } finally {
+            endTransaction(mDatabase);
+        }
+        return true;
+    }
+
+
+    /**
+     * 查询用户QR信息（根据qr_card）
+     */
+    public List<QR> queryQrInfoByQrCard(String qrCard) {
+        Cursor cursor = null;
+        List<QR> qrs = new ArrayList<>();
+        try {
+            if (mDBHelper == null) {
+                return null;
+            }
+            SQLiteDatabase db = mDBHelper.getReadableDatabase();
+            String where = "qr_card = ? ";
+            String[] whereValue = {qrCard};
+            cursor = db.query(DBHelper.TABLE_USER_QR, null, where, whereValue, null, null, null);
+            if (cursor != null && cursor.getCount() > 0 && cursor.moveToNext()) {
+                int dbId = cursor.getInt(cursor.getColumnIndex("_id"));
+                String qrName = cursor.getString(cursor.getColumnIndex("qr_name"));
+                String qrFloor = cursor.getString(cursor.getColumnIndex("qr_floor"));
+                long updateTime = cursor.getLong(cursor.getColumnIndex("update_time"));
+                long ctime = cursor.getLong(cursor.getColumnIndex("ctime"));
+
+                QR qr = new QR();
+                qr.setId(dbId);
+                qr.setQrName(qrName);
+                qr.setQrfloor(qrFloor);
+                qr.setQrCard(qrCard);
+                qr.setCtime(ctime);
+                qr.setUpdateTime(updateTime);
+                qrs.add(qr);
+            }
+        } finally {
+            closeCursor(cursor);
+        }
+        return qrs;
+    }
+
+    /**
+     * 删除qr表
+     */
+    public boolean deleteQr() {
+        boolean success = false;
+        try {
+            mDatabase = mDBHelper.getWritableDatabase();
+            beginTransaction(mDatabase);
+            if (mDatabase.delete(DBHelper.TABLE_USER_QR, null, null) < 0) {
+                return false;
+            }
+            setTransactionSuccessful(mDatabase);
+            success = true;
+
+        } finally {
+            endTransaction(mDatabase);
+        }
+        return success;
+    }
+
+    /**
+     * @param qrCard QR卡号
+     * @return
+     */
+    public boolean deleteQrInfo(String qrCard) {
+        boolean success = false;
+        try {
+            mDatabase = mDBHelper.getWritableDatabase();
+            beginTransaction(mDatabase);
+
+            if (!TextUtils.isEmpty(qrCard)) {
+                String where = "qr_card = ?";
+                String[] whereValue = {qrCard};
+
+                if (mDatabase.delete(DBHelper.TABLE_USER_QR, where, whereValue) < 0) {
+                    return false;
+                }
+
+                setTransactionSuccessful(mDatabase);
+                success = true;
+            }
+
+        } finally {
+            endTransaction(mDatabase);
+        }
+        return success;
+    }
+
+
+    //-----------------------------二维码部分 end---------------------------------
+
 
     // ---------------------------------------socket相关 start--------------------------------------
     // 获取识别记录

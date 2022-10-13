@@ -41,6 +41,12 @@ public class BaseActivity extends AppCompatActivity {
                 if (hasSdcardWrite != PackageManager.PERMISSION_GRANTED) {
                     requestPerssionArr.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
                 }
+
+                int hasLocation = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
+                if (hasLocation != PackageManager.PERMISSION_GRANTED) {
+                    requestPerssionArr.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+                }
+
                 // 是否应该显示权限请求
                 if (requestPerssionArr.size() >= 1) {
                     String[] requestArray = new String[requestPerssionArr.size()];

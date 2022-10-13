@@ -40,6 +40,9 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public static final String TABLE_RECORDS = "records";
 
+    /**用户二维码表*/
+    public static final String TABLE_USER_QR = "user_qr";
+
     public DBHelper(Context context) {
         super(context, DB_NAME, null, VERSION);
     }
@@ -56,6 +59,7 @@ public class DBHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_GROUP);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECORDS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_QR);
             onCreate(db);
         }
     }
@@ -114,10 +118,21 @@ public class DBHelper extends SQLiteOpenHelper {
         recordSql.append(" longId").append(" varchar(32) default \"\"   ,");
         recordSql.append(" score").append(" varchar(32) default \"\"   )");
 
+        //用户二维码
+        StringBuffer qrSql = new StringBuffer();
+        qrSql.append(CREATE_TABLE_START_SQL).append(TABLE_USER_QR).append(" ( ");
+        qrSql.append(" _id").append(CREATE_TABLE_PRIMIRY_SQL);
+        qrSql.append(" qr_name").append(" varchar(32) default \"\"   ,");
+        qrSql.append(" qr_card").append(" varchar(32) default \"\"   ,");
+        qrSql.append(" qr_floor").append(" varchar(32) default \"\"   ,");
+        qrSql.append(" ctime").append(" long ,");
+        qrSql.append(" update_time").append(" long )");
+
         try {
             db.execSQL(groupSql.toString());
             db.execSQL(userSql.toString());
             db.execSQL(recordSql.toString());
+            db.execSQL(qrSql.toString());
             // db.execSQL(featureSql.toString());
         } catch (Exception e) {
             e.printStackTrace();

@@ -43,7 +43,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="其它"
+                    android:text="其它设定"
                     android:textColor="@color/gate_white"
                     android:textSize="25sp" />
             </RelativeLayout>
@@ -134,6 +134,68 @@
                     <ImageView style="@style/configInnerImage" />
                 </LinearLayout>
             </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.3dp"
+                android:background="#333333" />
+
+            <LinearLayout
+                android:id="@+id/ll_expand"
+                android:layout_width="match_parent"
+                android:layout_height="60dp">
+
+                <TextView
+                    style="@style/configTextStyle"
+                    android:layout_height="wrap_content"
+                    android:text="拓展功能" />
+
+                <LinearLayout style="@style/configInnerImageLayout">
+
+                    <ImageView style="@style/configInnerImage" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.3dp"
+                android:background="#333333" />
+            <LinearLayout
+                android:id="@+id/ll_crl_light"
+                android:layout_width="match_parent"
+                android:layout_height="60dp">
+
+                <TextView
+                    style="@style/configTextStyle"
+                    android:layout_height="wrap_content"
+                    android:text="白色补光灯" />
+
+                <LinearLayout style="@style/configInnerImageLayout">
+
+                    <ImageView style="@style/configInnerImage" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.3dp"
+                android:background="#333333" />
+            <LinearLayout
+                android:id="@+id/ll_paw_change"
+                android:layout_width="match_parent"
+                android:layout_height="60dp">
+
+                <TextView
+                    style="@style/configTextStyle"
+                    android:layout_height="wrap_content"
+                    android:text="本机密码修改" />
+
+                <LinearLayout style="@style/configInnerImageLayout">
+
+                    <ImageView style="@style/configInnerImage" />
+                </LinearLayout>
+            </LinearLayout>
+
 
 
         </LinearLayout>

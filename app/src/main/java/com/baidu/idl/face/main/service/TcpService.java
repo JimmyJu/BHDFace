@@ -842,7 +842,12 @@ public class TcpService extends Service {
                         if (mBos != null) {
                             mBos.write((byte[]) mQueue.poll());
                             mBos.flush();
-                            LiveDataBus.get().with("sendNum").postValue(mSendNum++);
+
+                            if (mSendNum++ < 999999) {
+                                LiveDataBus.get().with("sendNum").postValue(mSendNum);
+                            } else {
+                                mSendNum = 0;
+                            }
                         }
                     }
                     mHandler.removeCallbacks(mSendRunnable);

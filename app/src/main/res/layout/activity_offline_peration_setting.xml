@@ -73,7 +73,7 @@
                 <TextView
                     style="@style/configTextStyle"
                     android:layout_height="wrap_content"
-                    android:text="离线资源导入" />
+                    android:text="离线资源导入(图片命名及格式：张三-12345678.jpg)" />
 
                 <LinearLayout style="@style/configInnerImageLayout">
 

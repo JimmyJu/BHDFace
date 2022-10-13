@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import com.example.datalibrary.db.DBManager;
 import com.example.datalibrary.listener.DBLoadListener;
 import com.example.datalibrary.model.Group;
+import com.example.datalibrary.model.QR;
 import com.example.datalibrary.model.User;
 
 import java.util.ArrayList;
@@ -445,6 +446,88 @@ public class FaceApi {
     public void setUsers(List<User> users) {
         this.users = users;
     }
+
+
+
+    //-----------------------------二维码部分 start---------------------------------
+
+    /**
+     * 添加QR
+     */
+    public boolean qrAdd(QR qr) {
+        if (qr == null) {
+            return false;
+        }
+
+        boolean ret = DBManager.getInstance().addQR(qr);
+
+        return ret;
+    }
+
+    /**
+     * QR添加
+     */
+    public boolean registerQrIntoDBmanager(String qrName, String qrCard, String qrfloor) {
+
+        QR qr = new QR();
+
+        qr.setQrName(qrName);
+        qr.setQrCard(qrCard);
+        qr.setQrfloor(qrfloor);
+
+        // 添加二维码信息到数据库
+        boolean importUserSuccess = FaceApi.getInstance().qrAdd(qr);
+
+        return importUserSuccess;
+    }
+
+    /**
+     * 查找QR信息（根据qrCard）
+     */
+    public List<QR> getQrInfoByQrCard(String qrCard) {
+        if (TextUtils.isEmpty(qrCard)) {
+            return null;
+        }
+        List<QR> qrInfo = DBManager.getInstance().queryQrInfoByQrCard(qrCard);
+        return qrInfo;
+    }
+
+    //根据卡号查找库中卡号
+    public String getQrCardByCard(String qrCard) {
+        if (TextUtils.isEmpty(qrCard)) {
+            return null;
+        }
+        List<QR> qrInfo = DBManager.getInstance().queryQrInfoByQrCard(qrCard);
+        if (qrInfo != null && qrInfo.size() > 0) {
+            return qrInfo.get(0).getQrCard();
+        }
+        return "";
+    }
+
+
+    /**
+     * 删除QR
+     */
+    public boolean deleteQr() {
+        boolean ret = DBManager.getInstance().deleteQr();
+        return ret;
+    }
+
+    /**
+     * 删除单个QR信息
+     *
+     * @param qrCard 要删除的QR卡号
+     */
+    public boolean deleteQrInfo(String qrCard) {
+        if (TextUtils.isEmpty(qrCard)) {
+            return false;
+        }
+
+        boolean ret = DBManager.getInstance().deleteQrInfo(qrCard);
+        return ret;
+    }
+
+    //-----------------------------二维码部分 end---------------------------------
 
 
 }

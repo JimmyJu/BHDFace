@@ -1,10 +1,16 @@
 package com.baidu.idl.face.main.activity.start;
 
+import android.app.Activity;
 import android.arch.lifecycle.Observer;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -25,6 +31,9 @@ import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.listener.DBLoadListener;
 import com.example.datalibrary.model.User;
 import com.example.yfaceapi.GPIOManager;
+import com.king.wechat.qrcode.WeChatQRCodeDetector;
+
+import org.opencv.OpenCV;
 
 import java.util.List;
 import java.util.Timer;
@@ -42,6 +51,10 @@ public class StartActivity extends BaseActivity {
     private TextView progressText;
     private View progressGroup;
     private Intent mIntent;
+
+    //蓝牙适配器
+    private BluetoothAdapter bluetoothAdapter;
+    private static final int REQUEST_ENABLE_BT = 1;
 
 
     @Override
@@ -65,8 +78,12 @@ public class StartActivity extends BaseActivity {
         }
 
         initView();
-        //激活
-        initLicense();
+
+        //设置低功耗蓝牙
+        setupBLE();
+
+        //激活许可证
+//        initLicense();
     }
 
 
@@ -90,6 +107,8 @@ public class StartActivity extends BaseActivity {
         initDBApi();
         //注册库初始化
         initListener();
+        //初始化 OpenCV 和 WeChatQRCodeDetector
+        initWeChatQR();
 
         //开启socket以及串口，先判断防止重复开启服务
         if (!Utils.isServiceRunning(mContext, "com.baidu.idl.face.main.service.TcpService")) {
@@ -105,6 +124,9 @@ public class StartActivity extends BaseActivity {
         }, 8 * 1000);
     }
 
+    /**
+     * 初始化许可证
+     */
     private void initLicense() {
         FaceSDKManager.getInstance().init(mContext, new SdkInitListener() {
             @Override
@@ -274,6 +296,53 @@ public class StartActivity extends BaseActivity {
                     }
                 }
             });
+        }
+    }
+
+    private void initWeChatQR() {
+        //初始化OpenCV
+        OpenCV.initAsync(mContext);
+
+        //初始化WeChatQRCodeDetector
+        WeChatQRCodeDetector.init(mContext);
+    }
+
+    /**
+     * 设置低功耗蓝牙
+     */
+    private void setupBLE() {
+        //检查是否支持BLE蓝牙
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(this, "本机不支持低功耗蓝牙!", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        BluetoothManager manager = getManager(this);
+        if (manager != null) {
+            bluetoothAdapter = manager.getAdapter();
+        }
+        if ((bluetoothAdapter == null) || (!bluetoothAdapter.isEnabled())) {
+            //调用系统对话框启动本地蓝牙
+            startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQUEST_ENABLE_BT);
+        } else {
+            initLicense();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public static BluetoothManager getManager(Context context) {
+        return (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == Activity.RESULT_OK) {
+                //蓝牙已打开
+                initLicense();
+            }
         }
     }
 

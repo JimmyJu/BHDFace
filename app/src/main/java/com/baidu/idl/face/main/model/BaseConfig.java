@@ -196,8 +196,40 @@ public class BaseConfig {
     private int mirrorDetectNIR = 0;
 
     //继电器默认关闭时间 单位（秒）
-
     private int relayTime = 3;
+
+    //是否开启蓝牙功能 0:不开启, 1:开启
+    private int bluetoothSwitch = 0;
+
+    //是否开启访客功能 0:不开启, 1:开启
+    private int visitorSwitch = 0;
+
+    //白色补光灯开关, 0:不开启, 1:开启
+    private int lightSwitch = 0;
+
+    public int getLightSwitch() {
+        return lightSwitch;
+    }
+
+    public void setLightSwitch(int lightSwitch) {
+        this.lightSwitch = lightSwitch;
+    }
+
+    public int getBluetoothSwitch() {
+        return bluetoothSwitch;
+    }
+
+    public void setBluetoothSwitch(int bluetoothSwitch) {
+        this.bluetoothSwitch = bluetoothSwitch;
+    }
+
+    public int getVisitorSwitch() {
+        return visitorSwitch;
+    }
+
+    public void setVisitorSwitch(int visitorSwitch) {
+        this.visitorSwitch = visitorSwitch;
+    }
 
     public int getRelayTime() {
         return relayTime;

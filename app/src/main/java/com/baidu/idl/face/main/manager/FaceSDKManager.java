@@ -1,13 +1,17 @@
 package com.baidu.idl.face.main.manager;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.baidu.idl.face.main.callback.AnalyzeQRCodeCallback;
 import com.baidu.idl.face.main.callback.FaceDetectCallBack;
 import com.baidu.idl.face.main.listener.SdkInitListener;
 import com.baidu.idl.face.main.model.GlobalSet;
 import com.baidu.idl.face.main.model.LivenessModel;
 import com.baidu.idl.face.main.model.SingleBaseConfig;
+import com.baidu.idl.face.main.qrcode.QRCodeAnalyze;
+import com.baidu.idl.face.main.utils.BitmapUtils;
 import com.baidu.idl.main.facesdk.FaceAuth;
 import com.baidu.idl.main.facesdk.FaceDarkEnhance;
 import com.baidu.idl.main.facesdk.FaceDetect;
@@ -84,6 +88,20 @@ public class FaceSDKManager {
     private long trackTime;
     private boolean isPush;
     private FaceSearch faceSearch;
+
+    private Bitmap mRBmp = null;
+    /**
+     * 二维码回调
+     */
+    private AnalyzeQRCodeCallback mAnalyzeQRCodeCallback;
+
+    public AnalyzeQRCodeCallback getAnalyzeQRCodeCallback() {
+        return mAnalyzeQRCodeCallback;
+    }
+
+    public void setAnalyzeQRCodeCallback(AnalyzeQRCodeCallback analyzeQRCodeCallback) {
+        this.mAnalyzeQRCodeCallback = analyzeQRCodeCallback;
+    }
 
     private FaceSDKManager() {
         faceAuth = new FaceAuth();
@@ -555,6 +573,23 @@ public class FaceSDKManager {
                     livenessModel.setMultiFrameTime(System.currentTimeMillis() - multiFrameTime);
                 } else {
                     emptyFrame();
+
+                    //解析QR
+                    try {
+                        mRBmp = BitmapUtils.getInstaceBmp(livenessModel.getBdFaceImageInstance());
+                        QRCodeAnalyze.analyzeQR(mRBmp,getAnalyzeQRCodeCallback());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        // 先判断是否已经回收
+                        if (mRBmp != null && !mRBmp.isRecycled()) {
+                            // 回收并且置为null
+                            mRBmp.recycle();
+                            mRBmp = null;
+                        }
+                        System.gc();
+                    }
+
                     // 流程结束销毁图片，开始下一帧图片检测，否着内存泄露
                     rgbInstanceOne.destory();
                     if (faceDetectCallBack != null) {

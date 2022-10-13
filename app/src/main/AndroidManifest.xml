@@ -18,7 +18,16 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- 开机自动允许	允许程序开机自动运行 -->
+    <uses-permission
+        android:name="android.permission.READ_LOGS"
+        tools:ignore="ProtectedPermissions" /> <!-- 允许程序连接到已配对的蓝牙设备 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" /> <!-- 允许程序发现和配对蓝牙设备 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> <!-- 支持ble的设备 -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" /> <!-- 定位权限 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 开机自动允许	允许程序开机自动运行 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-feature android:name="android.hardware.camera" />
@@ -75,8 +84,9 @@
         <activity android:name="com.baidu.idl.face.main.setting.OtherSettingActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.SDCardFileExplorerActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.RelayActivity" />
-
-
+        <activity android:name="com.baidu.idl.face.main.setting.ExtendedFunctionActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.LightActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.PasswordActivity" />
         <activity
             android:name="com.baidu.idl.face.main.activity.start.StartActivity"
             android:launchMode="singleTop">
@@ -146,8 +156,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
-
-
         <service
             android:name="com.baidu.idl.face.main.service.TcpService"
             android:enabled="true"

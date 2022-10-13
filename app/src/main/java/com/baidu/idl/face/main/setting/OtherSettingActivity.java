@@ -28,11 +28,24 @@ public class OtherSettingActivity extends BaseActivity implements View.OnClickLi
         LinearLayout photo_detection = findViewById(R.id.photo_detection);
         photo_detection.setOnClickListener(this);
 
+        //图片上传
         LinearLayout photo_upload = findViewById(R.id.photo_upload);
         photo_upload.setOnClickListener(this);
 
-        LinearLayout ll_relayTime = findViewById(R.id.ll_relayTime); //设置继电器时间值
+        //设置继电器时间值
+        LinearLayout ll_relayTime = findViewById(R.id.ll_relayTime);
         ll_relayTime.setOnClickListener(this);
+
+        //拓展功能 蓝牙访客等
+        LinearLayout ll_expand = findViewById(R.id.ll_expand);
+        ll_expand.setOnClickListener(this);
+
+        //白色补光灯控制
+        LinearLayout ll_crl_light = findViewById(R.id.ll_crl_light);
+        ll_crl_light.setOnClickListener(this);
+
+        LinearLayout ll_paw_change = findViewById(R.id.ll_paw_change);
+        ll_paw_change.setOnClickListener(this);
 
         qcSave = findViewById(R.id.qc_save);
         qcSave.setOnClickListener(this);
@@ -53,6 +66,12 @@ public class OtherSettingActivity extends BaseActivity implements View.OnClickLi
             startActivity(new Intent(OtherSettingActivity.this, SDCardFileExplorerActivity.class));
         } else if (id == R.id.ll_relayTime) {
             startActivity(new Intent(OtherSettingActivity.this, RelayActivity.class));
+        } else if (id == R.id.ll_expand) {
+            startActivity(new Intent(OtherSettingActivity.this, ExtendedFunctionActivity.class));
+        } else if (id == R.id.ll_crl_light) {
+            startActivity(new Intent(OtherSettingActivity.this, LightActivity.class));
+        } else if (id == R.id.ll_paw_change) {
+            startActivity(new Intent(OtherSettingActivity.this, PasswordActivity.class));
         }
 
     }

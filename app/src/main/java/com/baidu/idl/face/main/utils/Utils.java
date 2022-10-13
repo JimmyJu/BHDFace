@@ -168,6 +168,21 @@ public class Utils {
 
     }
 
+    /**
+     *
+     * @param time 分、时 加零（24小时制）
+     * @return
+     */
+    public static String addTimeZero(String time) {
+        String times = null;
+        if (time.length() == 1) {
+            times = "0" + time;
+        }else if (time.length() == 2){
+            times = time;
+        }
+        return times;
+    }
+
     /*
      * 字符转换为字节
      */
@@ -269,6 +284,60 @@ public class Utils {
             ids = "0" + id;
         } else if (id.length() == 20) {
             ids = id;
+        }
+
+        return ids;
+    }
+
+
+    //发送人员字节(20字节)
+    public static String addZero3(String name) {
+        String ids = null;
+        try {
+            byte[] nameBytes = name.getBytes("GB2312");
+            if (nameBytes.length == 1) {
+                ids = name + "                   ";
+            } else if (nameBytes.length == 2) {
+                ids = name + "                  ";
+            } else if (nameBytes.length == 3) {
+                ids = name + "                 ";
+            } else if (nameBytes.length == 4) {
+                ids = name + "                ";
+            } else if (nameBytes.length == 5) {
+                ids = name + "               ";
+            } else if (nameBytes.length == 6) {
+                ids = name + "              ";
+            } else if (nameBytes.length == 7) {
+                ids = name + "             ";
+            } else if (nameBytes.length == 8) {
+                ids = name + "            ";
+            } else if (nameBytes.length == 9) {
+                ids = name + "           ";
+            } else if (nameBytes.length == 10) {
+                ids = name + "          ";
+            } else if (nameBytes.length == 11) {
+                ids = name + "         ";
+            } else if (nameBytes.length == 12) {
+                ids = name + "        ";
+            } else if (nameBytes.length == 13) {
+                ids = name + "       ";
+            } else if (nameBytes.length == 14) {
+                ids = name + "      ";
+            } else if (nameBytes.length == 15) {
+                ids = name + "     ";
+            } else if (nameBytes.length == 16) {
+                ids = name + "    ";
+            } else if (nameBytes.length == 17) {
+                ids = name + "   ";
+            } else if (nameBytes.length == 18) {
+                ids = name + "  ";
+            } else if (nameBytes.length == 19) {
+                ids = name + " ";
+            } else if (nameBytes.length == 20) {
+                ids = name;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return ids;
@@ -736,7 +805,6 @@ public class Utils {
     }
 
 
-
     public static void main(String[] args) {
 ////        System.out.println(isMessyCode("Ã©Å¸Â©Ã©Â¡ÂºÃ¥Â¹Â³"));
 ////        System.out.println(isMessyCode("你好"));
@@ -769,9 +837,20 @@ public class Utils {
 //        System.out.println(Arrays.toString(floorBytes(88)));
 //        System.out.println(bytes2Hex2(floorBytes(88)));
 //
-        byte[] checkByte = new byte[]{(byte) 0x00, (byte) 0x00};
-        if (byteToHex(checkByte).equals("0000")) {
-            System.out.println("ture");
+//        byte[] checkByte = new byte[]{(byte) 0x00, (byte) 0x00};
+//        if (byteToHex(checkByte).equals("0000")) {
+//            System.out.println("ture");
+//        }
+        String s = "聚焦";
+        try {
+            String s2 = addZero3(s);
+
+            byte[] s1 = s2.getBytes("GB2312");
+            System.out.println(s1.length);
+            String username = new String(s1, "GB2312").trim();
+            System.out.println(username);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
 //        String floor = "2";

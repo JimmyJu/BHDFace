@@ -186,7 +186,7 @@ public class GateSettingActivity extends BaseActivity implements View.OnClickLis
         mHandler.postDelayed(() -> {
             GPIOManager.getInstance(mContext).pullDownRedLight();
             GPIOManager.getInstance(mContext).pullDownGreenLight();
-            GPIOManager.getInstance(mContext).pullDownWhiteLight();
+//            GPIOManager.getInstance(mContext).pullDownWhiteLight();
         }, 2000);
     }
 

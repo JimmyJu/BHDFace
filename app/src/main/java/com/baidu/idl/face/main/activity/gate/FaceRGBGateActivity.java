@@ -2,6 +2,12 @@ package com.baidu.idl.face.main.activity.gate;
 
 import android.app.AlertDialog;
 import android.arch.lifecycle.Observer;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanRecord;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,7 +25,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.TextureView;
@@ -34,6 +42,7 @@ import android.widget.Toast;
 
 import com.baidu.idl.face.main.activity.BaseActivity;
 import com.baidu.idl.face.main.api.Wiegand;
+import com.baidu.idl.face.main.callback.AnalyzeQRCodeCallback;
 import com.baidu.idl.face.main.callback.CameraDataCallback;
 import com.baidu.idl.face.main.callback.FaceDetectCallBack;
 import com.baidu.idl.face.main.gatecamera.AutoTexturePreviewView;
@@ -45,26 +54,36 @@ import com.baidu.idl.face.main.model.LivenessModel;
 import com.baidu.idl.face.main.model.SingleBaseConfig;
 import com.baidu.idl.face.main.setting.GateSettingActivity;
 import com.baidu.idl.face.main.utils.BitmapUtils;
+import com.baidu.idl.face.main.utils.ByteUtils;
 import com.baidu.idl.face.main.utils.DateUtil;
 import com.baidu.idl.face.main.utils.DensityUtils;
 import com.baidu.idl.face.main.utils.FaceOnDrawTexturViewUtil;
 import com.baidu.idl.face.main.utils.FileUtils;
+import com.baidu.idl.face.main.utils.IBeaconAccept;
 import com.baidu.idl.face.main.utils.LiveDataBus;
 import com.baidu.idl.face.main.utils.LogUtilsDynamic;
 import com.baidu.idl.face.main.utils.NavigationBarUtil;
 import com.baidu.idl.face.main.utils.SPUtils;
+import com.baidu.idl.face.main.utils.ScanUtils;
+import com.baidu.idl.face.main.utils.SoundPoolUtil;
 import com.baidu.idl.face.main.utils.ToastUtils;
 import com.baidu.idl.face.main.utils.Utils;
 import com.baidu.idl.facesdkdemo.R;
 import com.baidu.idl.main.facesdk.FaceInfo;
+import com.example.datalibrary.api.FaceApi;
+import com.example.datalibrary.model.QR;
 import com.example.datalibrary.model.User;
 import com.example.yfaceapi.GPIOManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 
 
 public class FaceRGBGateActivity extends BaseActivity {
@@ -89,6 +108,14 @@ public class FaceRGBGateActivity extends BaseActivity {
     private int GreenLight_Status = 0;
     //时间戳标识
     private String timeFlag;
+    private String timeFlag1;
+
+    //补光灯时间
+    private String startTime;
+    private String endTime;
+    private int beginHour, beginMin, endHour, endMin;
+    //监听时间戳线程标识
+    private boolean timeFlagBool = true;
 
     //继电器标示
     private boolean relayFlag = false;
@@ -110,13 +137,38 @@ public class FaceRGBGateActivity extends BaseActivity {
     //    private View view;
 //    private TextView logoText;
     private User mUser;
-    private boolean isTime = true;
-    private long startTime;
-    private boolean detectCount;
     private AutoTexturePreviewView mAutoCameraPreviewView;
     private DoubleClickListener doubleClickListener;
 
-    //-------------------------------------------------------------------------------
+    private SoundPoolUtil mSoundPoolUtil;
+
+    //检测失败标识
+    private boolean cancelFlag = true;
+
+    private boolean qrFlag = false;
+    private boolean blFlag = false;
+
+    //设置默认密码
+    private String settingPassword = "123456";
+
+    /**
+     * ibeacon信号强度值:
+     * 值越小，ibeacon设备距离蓝牙模块越近，通过判断这个值的大小确定距离
+     */
+    private static final int SIGNAL_STRENGTH = 70;
+
+    /**
+     * 蓝牙扫描
+     */
+    private BluetoothLeScanner mBLEScanner;
+    /**
+     * 蓝牙Adapter
+     */
+    private BluetoothAdapter mBluetoothAdapter;
+
+    private BluetoothManager mBluetoothManager;
+
+    //-------------------------------人脸检测上传start------------------------------------------------
     /**
      * 卡号
      */
@@ -160,7 +212,14 @@ public class FaceRGBGateActivity extends BaseActivity {
     private Boolean switchPortNum = false;
     int flag = 0;
 
-    //-----------------------------------------------------------------------------
+    //-------------------------------------end----------------------------------------
+
+
+
+
+
+
+
     //动态对比数
     private int faceCount = 1;
 
@@ -182,6 +241,21 @@ public class FaceRGBGateActivity extends BaseActivity {
         //接收数据
         liveDataBus();
 
+        //初始化数据
+        initData();
+
+        //监听时间
+        if (SingleBaseConfig.getBaseConfig().getLightSwitch() == 1) {
+            monitorTimestamp();
+        } else if (SingleBaseConfig.getBaseConfig().getLightSwitch() == 0) {
+            mGPIOManager.pullDownWhiteLight();
+        }
+
+        //扫描BLE设备
+        if (SingleBaseConfig.getBaseConfig().getBluetoothSwitch() == 1) {
+            scanLeDevice();
+        }
+
         // 屏幕的宽
         int displayWidth = DensityUtils.getDisplayWidth(mContext);
         // 屏幕的高
@@ -201,6 +275,66 @@ public class FaceRGBGateActivity extends BaseActivity {
 
         int rbgCameraId = SingleBaseConfig.getBaseConfig().getRBGCameraId();
         Log.e("TAG", "rbgCameraId---------------: " + rbgCameraId);
+    }
+
+    /**
+     * 监听时间戳 白色补光灯控制
+     */
+    private void monitorTimestamp() {
+        new Thread(() -> {
+            while (timeFlagBool) {
+                try {
+                    Thread.sleep(1000);
+                    if (DateUtil.atTheCurrentTime(beginHour, beginMin, endHour, endMin)) {
+                        //true表示范围内   否则false
+                        mGPIOManager.pullUpWhiteLight();
+                    } else {
+                        mGPIOManager.pullDownWhiteLight();
+                    }
+                   /* if (DateUtil.getTimeShort().equals(startTime)) {
+//                        Log.d("TAG", "开启时间: " + DateUtil.getTimeShort());
+                        manager.pullUpWhiteLight();
+                    }
+
+                    if (DateUtil.getTimeShort().equals(endTime)) {
+//                        Log.d("TAG", "关闭时间: " + DateUtil.getTimeShort());
+                        manager.pullDownWhiteLight();
+                    }*/
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void initData() {
+        //加载二维码提示音
+        mSoundPoolUtil = new SoundPoolUtil();
+        mSoundPoolUtil.loadDefault(this);
+
+        //获取设定的补光灯时间值
+        String light_start = (String) SPUtils.get(this, "light_start", "");
+        String light_end = (String) SPUtils.get(this, "light_end", "");
+
+        if (light_start != null && light_end != null) {
+            startTime = light_start;
+            endTime = light_end;
+            if (!startTime.isEmpty() && !endTime.isEmpty()) {
+                beginHour = Integer.parseInt(startTime.substring(0, startTime.indexOf(":")));
+                beginMin = Integer.parseInt(startTime.substring(startTime.lastIndexOf(":") + 1));
+                endHour = Integer.parseInt(endTime.substring(0, endTime.indexOf(":")));
+                endMin = Integer.parseInt(endTime.substring(endTime.lastIndexOf(":") + 1));
+                Log.e("TAG", "时间范围: " + beginHour + ":" + beginMin + "----" + endHour + ":" + endMin);
+            }
+        }
+
+        //获取当前设置密码
+        String ed_settingPassword = (String) SPUtils.get(this, "setting_psw", "");
+        if (!ed_settingPassword.isEmpty()) {
+            settingPassword = ed_settingPassword;
+        }
+        SPUtils.put(this, "setting_psw", settingPassword);
+        Log.i("TAG", "settingPws" + settingPassword);
     }
 
     private void initListener() {
@@ -352,6 +486,11 @@ public class FaceRGBGateActivity extends BaseActivity {
     private void startTestOpenDebugRegisterFunction() {
         //获取当前时间
         timeFlag = DateUtil.timeStamp();
+
+        //QRcode检测回调
+        FaceSDKManager.getInstance().setAnalyzeQRCodeCallback(mAnalyzeQRCodeCallback);
+        timeFlag1 = DateUtil.timeStamp();
+
         // TODO ： 临时放置
         //  CameraPreviewManager.getInstance().setCameraFacing(CameraPreviewManager.CAMERA_USB);
         if (SingleBaseConfig.getBaseConfig().getRBGCameraId() != -1) {
@@ -431,8 +570,8 @@ public class FaceRGBGateActivity extends BaseActivity {
                     userNameLayout.setVisibility(View.GONE);
                     return;*/
 
-                    textHuanying.setVisibility(View.VISIBLE);
-                    userNameLayout.setVisibility(View.GONE);
+//                    textHuanying.setVisibility(View.VISIBLE);
+//                    userNameLayout.setVisibility(View.GONE);
                 }
                 /*isTime = true;
                 if (detectCount) {
@@ -491,8 +630,8 @@ public class FaceRGBGateActivity extends BaseActivity {
                             //发送串口数据
                             sendSerialPortData(null);
                         } else {
-                            textHuanying.setVisibility(View.VISIBLE);
-                            userNameLayout.setVisibility(View.GONE);
+//                            textHuanying.setVisibility(View.VISIBLE);
+//                            userNameLayout.setVisibility(View.GONE);
                         }
                     } else {
                         //补光灯控制  绿灯
@@ -642,7 +781,7 @@ public class FaceRGBGateActivity extends BaseActivity {
 //            if (SingleBaseConfig.getBaseConfig().getMusicSwitch() == 1) {
             soundID.put(1, mSoundPool.load(this, R.raw.unregistered, 1));
             soundID.put(2, mSoundPool.load(this, R.raw.success, 1));
-//                soundID.put(3, mSoundPool.load(this, R.raw.bluetooth_signal, 1));//蓝牙信息播报
+            soundID.put(3, mSoundPool.load(this, R.raw.info, 1));//蓝牙信息播报
 //                soundID.put(4, mSoundPool.load(this, R.raw.error_info, 1));//复验--不通过
 //                soundID.put(5, mSoundPool.load(this, R.raw.face_verify, 1));//复验--人脸播报
 //                soundID.put(6, mSoundPool.load(this, R.raw.qrcode_verify, 1));//复验--二维码播报
@@ -705,7 +844,7 @@ public class FaceRGBGateActivity extends BaseActivity {
                 if (newTime - oldTime > 3000) {
                     faceTime.put(user.getUserName(), newTime);
                     //韦根输出
-                    wiegandOutput34(Utils.addZero(user.getUserInfo()));
+                    wiegandOutput34(Utils.addZero(user.getUserInfo()), user.getImageName());
 //                    if (SingleBaseConfig.getBaseConfig().getMusicSwitch() == 1) {
                     //播放音频
                     if (null != mSoundPool) {
@@ -719,7 +858,7 @@ public class FaceRGBGateActivity extends BaseActivity {
                 Long time = System.currentTimeMillis();
                 faceTime.put(user.getUserName(), time);
                 //韦根输出
-                wiegandOutput34(Utils.addZero(user.getUserInfo()));
+                wiegandOutput34(Utils.addZero(user.getUserInfo()), user.getImageName());
 //                if (SingleBaseConfig.getBaseConfig().getMusicSwitch() == 1) {
                 //播放音频
                 if (null != mSoundPool) {
@@ -765,7 +904,7 @@ public class FaceRGBGateActivity extends BaseActivity {
                                     //拼接 特征、卡号
                                     Utils.concat(livenessModel.getFeature(), Utils.hexString2Bytes(user.getUserInfo())),
                                     //人名
-                                    user.getUserName().getBytes("GB2312"),
+                                    Utils.addZero3(user.getUserName()).getBytes("GB2312"),
                                     //照片
                                     imageData
                             );
@@ -835,7 +974,7 @@ public class FaceRGBGateActivity extends BaseActivity {
                         if (etUsername.getText().toString().length() == 0 || etPassword.getText().toString().length() == 0) {
                             ToastUtils.toast(getApplicationContext(), "账号或密码不能为空!");
                         } else if (etUsername.getText().toString().equals("Admin")
-                                && etPassword.getText().toString().equals("123456")) {
+                                && etPassword.getText().toString().equals(settingPassword)) {
 
                             if (!FaceSDKManager.initModelSuccess) {
                                 Toast.makeText(mContext, "SDK正在加载模型，请稍后再试",
@@ -864,27 +1003,64 @@ public class FaceRGBGateActivity extends BaseActivity {
     /**
      * 输出韦根34位 /rs485 /继电器
      */
-    private void wiegandOutput34(String id) {
-        //韦根
-        BigInteger data = new BigInteger(id, 16);
-        int result = mWiegand.output34(data.longValue());
-        Log.i("TAG", "Wiegand34 output result:" + result + " card: " + data.longValue() + "  card-16:" + id);
+    private void wiegandOutput34(String id, String floorNumber) {
+        try {
+            //楼层号
+            if (!floorNumber.isEmpty()) {
+           /* //sendByte1 + 终端ID(2)
+            byte[] concat1 = Utils.concat(sendByte1, Utils.terminalBytes(terminalId));
+            //sendByte2 + 用户卡号(16)
+            byte[] concat2 = Utils.concat(sendByte2, Utils.cardBytes(Utils.addZero(id)));
+            //所在楼层（1) + sendByte3
+            byte[] concat3 = Utils.concat(Utils.floorBytes(floorId), sendByte3);
+            //目的楼层(1) + sendByte4
+            byte[] concat4 = Utils.concat(Utils.hexString2Bytes(floorNumber), sendByte4);
+            byte[] concat5 = Utils.addBytes(concat1, concat2, concat3);
+            byte[] concat = Utils.concat(concat5, concat4);*/
+                //数据发送
+//                    sendDataByUDP1(concat);
 
-        //485输出
-        byte[] crcUuid = Utils.getSendId(Utils.hexString2Bytes(Utils.addZero(id)));
-        LiveDataBus.get().with("SerialData").setValue(crcUuid);
+                //访客控制
+             /*   //移除继电器延时
+                handler.removeCallbacks(relayTimeRunnable);
+                relayFlag = false;
 
-        //移除继电器延时
-        handler.removeCallbacks(relayTimeRunnable);
-        relayFlag = false;
+                //继电器拉升
+                mGPIOManager.pullUpRelay();
 
-        //继电器拉升
-        mGPIOManager.pullUpRelay();
+                //延时
+                if (!relayFlag) {
+                    relayFlag = true;
+                    handler.postDelayed(relayTimeRunnable, SingleBaseConfig.getBaseConfig().getRelayTime() * 1000L);
+                }*/
 
-        //延时
-        if (!relayFlag) {
-            relayFlag = true;
-            handler.postDelayed(relayTimeRunnable, SingleBaseConfig.getBaseConfig().getRelayTime() * 1000);
+            }
+
+
+            //韦根
+            BigInteger data = new BigInteger(id, 16);
+            int result = mWiegand.output34(data.longValue());
+            Log.i("TAG", "Wiegand34 output result:" + result + " card: " + data.longValue() + "  card-16:" + id);
+
+            //485输出
+            byte[] crcUuid = Utils.getSendId(Utils.hexString2Bytes(Utils.addZero(id)));
+            LiveDataBus.get().with("SerialData").setValue(crcUuid);
+
+            //移除继电器延时
+            handler.removeCallbacks(relayTimeRunnable);
+            relayFlag = false;
+
+            //继电器拉升
+            mGPIOManager.pullUpRelay();
+
+            //延时
+            if (!relayFlag) {
+                relayFlag = true;
+                handler.postDelayed(relayTimeRunnable, SingleBaseConfig.getBaseConfig().getRelayTime() * 1000);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -925,6 +1101,295 @@ public class FaceRGBGateActivity extends BaseActivity {
     }
 
     /**
+     * 二维码回调
+     * lib-zxing -- CodeUtils
+     */
+    AnalyzeQRCodeCallback mAnalyzeQRCodeCallback = new AnalyzeQRCodeCallback() {
+        @Override
+        public void onAnalyzeSuccess(String result) {
+            if (Long.parseLong(DateUtil.timeStamp()) - Long.parseLong(timeFlag1) > 1) {
+                timeFlag1 = DateUtil.timeStamp();
+                mSoundPoolUtil.play();
+            }
+
+            runOnUiThread(() -> {
+//                Log.e("TAG", "发现二维码: " + result);
+//                Log.e("TAG", "———————原————————: " + result + "长度：" + result.length());
+                // 该正则匹配结果成功，说明只包含数字或字母，则认为字符串符合规范（注意不允许为空时，修改*为+即可）
+                String reg = "^[\\da-zA-Z]*$";
+                if (result.matches(reg)) {
+                    if (result.length() == 40) {
+                        String substring = result.substring(0, 32);
+                        String key = substring.substring(0, 16);
+                        String encodeStr = substring.substring(16);
+
+                        Date orderDateStart = null;
+                        try {
+                            //判断时间 5分钟之内有效
+                            orderDateStart = new SimpleDateFormat("yyyyMMddHHmmssSS").parse(key);
+                            if (Utils.time(orderDateStart)) {
+
+                                byte[] keys = ScanUtils.merge2BytesTo1Byte(key);
+                                byte[] encodeStrs = ScanUtils.hexStringToBytes(encodeStr);
+                                try {
+                                    byte[] decrypt = ScanUtils.decrypt(encodeStrs, keys);
+                                    String datas = ScanUtils.byte2hex(decrypt).substring(2, 10);
+
+                                    //存储二维码解析的卡号
+                                   /* if (qrCodeID != null) {
+                                        qrCodeID.clear();
+                                    }
+                                    qrCodeID.put("qrCodeID", datas);*/
+
+                            /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                            builder.setTitle("解析结果")
+                                    .setMessage("当前卡号：" + datas)
+                                    .setPositiveButton("OK", (dialog, which) -> {
+                                    }).create().show();*/
+
+                                    //根据QrCard查找QR信息
+                                    String qrName = "";
+                                    List<QR> qrInfo = FaceApi.getInstance().getQrInfoByQrCard(datas);
+                                    if (qrInfo != null && qrInfo.size() > 0) {
+                                        qrName = qrInfo.get(0).getQrName();
+                                        //显示人名
+                                        validView("姓名:" + qrName);
+                                    } else {
+                                        //显示卡号
+                                        validView("二维码号:" + datas);
+                                    }
+//                                    Log.d("TAG", "查询到的人名: " + qrName);
+
+//                                    validView(datas);
+//                                Log.d("TAG", "当前卡号：" + datas );
+                                    delaySendWiegand(datas);
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                invalidView("此二维码已过期!");
+                            }
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        invalidView("无效的二维码!");
+                    }
+                } else {
+                    invalidView("无效的二维码!");
+                }
+            });
+        }
+
+        @Override
+        public void onAnalyzeFailed() {
+            if (cancelFlag) {
+                if (userNameLayout.getVisibility() != View.GONE) {
+                    cancelFlag = false;
+                    handler.postDelayed(() -> {
+//                        Log.e("TAG", "显示框关闭");
+                        textHuanying.setVisibility(View.VISIBLE);
+                        userNameLayout.setVisibility(View.GONE);
+                        cancelFlag = true;
+
+                    }, 2000);
+                }
+            }
+        }
+    };
+
+
+    /**
+     * 发送二维码信息
+     *
+     * @param datas 卡号
+     */
+    private void delaySendWiegand(String datas) {
+        if (!qrFlag) {
+            qrFlag = true;
+
+            handler.postDelayed(() -> {
+
+                //楼层号
+                String qrFloorNumber;
+                List<QR> qrInfo = FaceApi.getInstance().getQrInfoByQrCard(datas);
+                if (qrInfo != null && qrInfo.size() > 0) {
+                    qrFloorNumber = qrInfo.get(0).getQrfloor();
+                } else {
+                    qrFloorNumber = "";
+                }
+                Log.d("TAG", "查询到的楼层号: " + qrFloorNumber);
+
+
+                //韦根34 /rs485
+                wiegandOutput34(datas, qrFloorNumber);
+                qrFlag = false;
+            }, 1000);
+
+        }
+    }
+
+
+    /**
+     * 扫描BLE设备
+     */
+    private void scanLeDevice() {
+        //初始化BluetoothManager和BluetoothAdapter
+        if (mBluetoothManager == null) {
+            mBluetoothManager = (BluetoothManager) this.getSystemService(BLUETOOTH_SERVICE);
+        }
+        if (mBluetoothManager != null && mBluetoothAdapter == null) {
+            mBluetoothAdapter = mBluetoothManager.getAdapter();
+        }
+        if (mBLEScanner == null) {
+            mBLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        }
+
+        Log.d("TAG", "searchBLE: ----------> startScan");
+        //SDK < 21使用bluetoothAdapter.startLeScan(new BluetoothAdapter.LeScanCallback())
+        mBLEScanner.startScan(scanCallback);
+
+        //设置结束扫描
+        handler.postDelayed(bleRunnable, 10 * 3000); //30秒内不可断开、连接重复5次
+    }
+
+    private Runnable bleRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d("TAG", "searchBLE: --------->  stopScan");
+            mBLEScanner.stopScan(scanCallback);
+            scanLeDevice();
+        }
+    };
+
+    /**
+     * BL扫描回调
+     */
+    private final ScanCallback scanCallback = new ScanCallback() {
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+//            Log.e("TAG", "onBatchScanResults: " + results.toString());
+        }
+
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+//            if (result.getScanRecord() != null) {
+//                Log.e("TAG", "onScanResult: " + result.toString() + "\n" + Utils.byteToHex(result.getScanRecord().getBytes()));
+//            }
+            ScanRecord scanRecord = result.getScanRecord();
+            byte[] scanBytes = scanRecord.getBytes();
+            String bytesToHex = ByteUtils.bytesToHex(scanBytes);
+
+            if (bytesToHex.contains("4c000215")) {
+//                Log.e("TAG", "ScanResult-----> :" + bytesToHex + "\n" + result.getRssi());
+                IBeaconAccept iBeaconAccept = new IBeaconAccept();
+
+                SparseArray<byte[]> specificData = scanRecord.getManufacturerSpecificData();
+
+                if (specificData == null) {
+                    return;
+                }
+
+                for (int i = 0; i < specificData.size(); i++) {
+                    byte[] bytes = specificData.valueAt(i);
+                    if (bytes == null) {
+                        continue;
+                    }
+                    IBeaconAccept.IBeaconInfo iBeaconInfo = iBeaconAccept.getIBeaconInfo(scanBytes, result.getRssi());
+                    String uuid = iBeaconInfo.uuid;
+                    if (!TextUtils.isEmpty(uuid)) {
+                        //根据信号强度值大小 确定距离
+                        if (Math.abs(iBeaconInfo.rssi) < SIGNAL_STRENGTH) {
+                            String replace = uuid.replace("-", "");
+                            Log.d("TAG", "uuid: " + uuid + ", 距离 " + Math.abs(iBeaconInfo.rssi));
+//                            Log.d("TAG", "onScanResult: " + replace);
+                            String key = replace.substring(0, 16);
+                            String encodeStr = replace.substring(16);
+                            byte[] keys = ScanUtils.merge2BytesTo1Byte(key);
+                            byte[] encodeStrs = ScanUtils.hexStringToBytes(encodeStr);
+                            try {
+                                byte[] decrypt = ScanUtils.decrypt(encodeStrs, keys);
+                                String datas = ScanUtils.byte2hex(decrypt).substring(2, 10);
+
+                                //存储蓝牙解析的卡号
+                               /* if (bluetoothID != null) {
+                                    bluetoothID.clear();
+                                }
+                                bluetoothID.put("bluetoothID", datas);*/
+
+                                //发送数据
+                                delaySendBLWiegand(datas);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+//            Log.e("TAG", "onScanFailed: " + errorCode);
+        }
+    };
+
+    /**
+     * 发送蓝牙信息
+     *
+     * @param datas
+     */
+    private void delaySendBLWiegand(String datas) {
+        if (!blFlag) {
+            blFlag = true;
+            handler.postDelayed(() -> {
+                runOnUiThread(() -> showBlHint(datas));
+                //播放音频
+                if (null != mSoundPool) {
+                    mSoundPool.play(soundID.get(3), volume, volume, 0, 0, 1);
+                }
+                //韦根34 / rs485
+                wiegandOutput34(datas, "");
+                Log.e("TAG", "datas: " + datas);
+                blFlag = false;
+            }, 1000);
+        }
+
+    }
+
+
+    //QR有效的二维码
+    private void validView(String card) {
+        textHuanying.setVisibility(View.GONE);
+        userNameLayout.setVisibility(View.VISIBLE);
+        nameImage.setImageResource(R.mipmap.ic_tips_gate_success);
+        nameText.setTextColor(Color.parseColor("#0dc6ff"));
+        nameText.setText(card);
+    }
+
+    //QR无效的二维码
+    private void invalidView(String text) {
+        textHuanying.setVisibility(View.GONE);
+        userNameLayout.setVisibility(View.VISIBLE);
+        nameImage.setImageResource(R.mipmap.ic_tips_gate_fail);
+        nameText.setTextColor(Color.parseColor("#fec133"));
+        nameText.setText(text);
+    }
+
+    //BL提示
+    private void showBlHint(String card) {
+        textHuanying.setVisibility(View.GONE);
+        userNameLayout.setVisibility(View.VISIBLE);
+        nameImage.setImageResource(R.mipmap.ic_tips_gate_success);
+        nameText.setTextColor(Color.parseColor("#0dc6ff"));
+        nameText.setText("蓝牙信号:" + card);
+    }
+
+    /**
      * 释放资源
      */
     private void releaseSoundPool() {
@@ -933,7 +1398,7 @@ public class FaceRGBGateActivity extends BaseActivity {
             mSoundPool.autoPause();
             mSoundPool.unload(soundID.get(1));
             mSoundPool.unload(soundID.get(2));
-//            mSoundPool.unload(soundID.get(3));
+            mSoundPool.unload(soundID.get(3));
 //            mSoundPool.unload(soundID.get(4));
 //            mSoundPool.unload(soundID.get(5));
 //            mSoundPool.unload(soundID.get(6));
@@ -954,6 +1419,11 @@ public class FaceRGBGateActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         CameraPreviewManager.getInstance().stopPreview();
+        //二维码声音释放
+        mSoundPoolUtil.release();
+
+        //关闭时间监听
+        timeFlagBool = false;
 
         mWiegand.release();
 
@@ -967,6 +1437,13 @@ public class FaceRGBGateActivity extends BaseActivity {
         delayClose_Red_GedreenLight();
 
         releaseSoundPool();
+
+        //释放蓝牙
+        if (mBLEScanner != null) {
+            Log.e("TAG", "BLEScanner_release");
+            mBLEScanner.stopScan(scanCallback);
+            handler.removeCallbacks(bleRunnable);
+        }
     }
 
     @Override

@@ -64,10 +64,24 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+
+    //从普通Java代码转kotlin后，运行可能出现的错误：Error: Program type already present: org.intellij.lang.annotations.JdkConstants$PatternFlags
+    configurations {
+        cleanedAnnotations
+        compile.exclude group: 'org.jetbrains', module: 'annotations'
+    }
+
     externalNativeBuild {
         ndkBuild {
             path 'src/main/jni/Android.mk'
         }
+    }
+
+    packagingOptions {
+        // .so都选择第一个
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+
     }
 }
 
@@ -102,8 +116,12 @@ dependencies {
 
     //核心算法 module
     implementation project(':facelibrary')
-//    implementation project(':gatelibrary')
-//    implementation project(':paymentlibrary')
-//    implementation project(':attrbutelibrary')
 
+    // OpenCV基础库（*必须）
+    implementation 'com.github.jenly1314.WeChatQRCode:opencv:1.2.0'
+//    implementation 'com.github.jenly1314.WeChatQRCode:opencv-armv7a:1.2.0'
+    implementation 'com.github.jenly1314.WeChatQRCode:opencv-armv64:1.2.0'
+
+    // 微信二维码识别功能
+    implementation 'com.github.jenly1314.WeChatQRCode:wechat-qrcode:1.2.0'
 }

@@ -149,6 +149,9 @@ public class GateConfigUtils {
             SingleBaseConfig.getBaseConfig().setRBGCameraId(jsonObject.getInt("rbgCameraId"));
 
             SingleBaseConfig.getBaseConfig().setRelayTime(jsonObject.getInt("relayTime"));
+            SingleBaseConfig.getBaseConfig().setBluetoothSwitch(jsonObject.getInt("switchBluetooth"));
+            SingleBaseConfig.getBaseConfig().setVisitorSwitch(jsonObject.getInt("switchVisitor"));
+            SingleBaseConfig.getBaseConfig().setLightSwitch(jsonObject.getInt("lightSwitch"));
 
             return true;
         } catch (Exception e) {
@@ -337,6 +340,21 @@ public class GateConfigUtils {
                 return false;
             }
 
+            int switchVisitor = jsonObject.getInt("switchVisitor");
+            if (!(switchVisitor == 0 || switchVisitor == 1)) {
+                return false;
+            }
+
+            int switchBluetooth = jsonObject.getInt("switchBluetooth");
+            if (!(switchBluetooth == 0 || switchBluetooth == 1)) {
+                return false;
+            }
+
+            int lightSwitch = jsonObject.getInt("lightSwitch");
+            if (!(lightSwitch == 0 || lightSwitch == 1)) {
+                return false;
+            }
+
 
             int rgbAndNirWidth = jsonObject.getInt("rgbAndNirWidth");
             int rgbAndNirHeight = jsonObject.getInt("rgbAndNirHeight");
@@ -426,6 +444,9 @@ public class GateConfigUtils {
             jsonObject.put("rbgCameraId", SingleBaseConfig.getBaseConfig().getRBGCameraId());
 
             jsonObject.put("relayTime", SingleBaseConfig.getBaseConfig().getRelayTime());
+            jsonObject.put("switchBluetooth", SingleBaseConfig.getBaseConfig().getBluetoothSwitch());
+            jsonObject.put("switchVisitor", SingleBaseConfig.getBaseConfig().getVisitorSwitch());
+            jsonObject.put("lightSwitch", SingleBaseConfig.getBaseConfig().getLightSwitch());
 
             // 修改内容写入配置文件
             FileUtils.writeTxtFile(jsonObject.toString(), filePath);
