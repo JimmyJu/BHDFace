@@ -182,6 +182,7 @@ public class DBManager {
         }
         return groupList;
     }
+
     /**
      * 查询用户组（根据groupId）
      */
@@ -375,17 +376,17 @@ public class DBManager {
                 user.setImageName(imageName);
                 features.add(user);
                 mSuccessCount++;
-                if (dbLoadListener != null){
-                    dbLoadListener.onLoad(mSuccessCount , count ,
-                            ((float)mSuccessCount / (float)count));
+                if (dbLoadListener != null) {
+                    dbLoadListener.onLoad(mSuccessCount, count,
+                            ((float) mSuccessCount / (float) count));
                 }
             }
-            if (dbLoadListener != null){
-                dbLoadListener.onComplete(features , count);
+            if (dbLoadListener != null) {
+                dbLoadListener.onComplete(features, count);
             }
-        } catch (Exception e){
-            if (dbLoadListener != null){
-                dbLoadListener.onFail(mSuccessCount , count , features);
+        } catch (Exception e) {
+            if (dbLoadListener != null) {
+                dbLoadListener.onFail(mSuccessCount, count, features);
             }
         } finally {
             closeCursor(cursor);
@@ -436,6 +437,53 @@ public class DBManager {
         }
         return users;
     }
+
+    /**
+     * @return 查询访客用户  imageName字段 --暂定为楼层号
+     */
+    public List<User> queryVisitor() {
+        Cursor cursor = null;
+        List<User> users = new ArrayList<>();
+        try {
+            if (mDBHelper == null) {
+                return null;
+            }
+            SQLiteDatabase db = mDBHelper.getReadableDatabase();
+            String where = "group_id = ? order by ctime desc";
+            String[] whereValue = {GROUP_ID};
+            cursor = db.query(DBHelper.TABLE_USER, null, where, whereValue, null, null, null);
+            while (cursor != null && cursor.getCount() > 0 && cursor.moveToNext()) {
+                int dbId = cursor.getInt(cursor.getColumnIndex("_id"));
+                String userId = cursor.getString(cursor.getColumnIndex("user_id"));
+                String userName = cursor.getString(cursor.getColumnIndex("user_name"));
+                String userInfo = cursor.getString(cursor.getColumnIndex("user_info"));
+                String faceToken = cursor.getString(cursor.getColumnIndex("face_token"));
+                byte[] feature = cursor.getBlob(cursor.getColumnIndex("feature"));
+                String imageName = cursor.getString(cursor.getColumnIndex("image_name"));
+                long updateTime = cursor.getLong(cursor.getColumnIndex("update_time"));
+                long ctime = cursor.getLong(cursor.getColumnIndex("ctime"));
+
+                if (imageName != null && imageName.length() > 0) {
+                    User user = new User();
+                    user.setId(dbId);
+                    user.setUserId(userId);
+                    user.setGroupId(GROUP_ID);
+                    user.setUserName(userName);
+                    user.setCtime(ctime);
+                    user.setUpdateTime(updateTime);
+                    user.setUserInfo(userInfo);
+                    user.setFaceToken(faceToken);
+                    user.setFeature(feature);
+                    user.setImageName(imageName);
+                    users.add(user);
+                }
+            }
+        } finally {
+            closeCursor(cursor);
+        }
+        return users;
+    }
+
 
     /**
      * 查询用户（根据userId）
@@ -514,6 +562,7 @@ public class DBManager {
         }
         return users;
     }
+
     /**
      * 查询单一用户（根据userName模糊查询）
      */
@@ -556,6 +605,7 @@ public class DBManager {
         }
         return user;
     }
+
     /**
      * 查询用户（根据userName模糊查询）
      */
@@ -712,6 +762,7 @@ public class DBManager {
         }
         return true;
     }
+
     /**
      * 删除用户
      */
@@ -721,23 +772,25 @@ public class DBManager {
             mDatabase = mDBHelper.getWritableDatabase();
             beginTransaction(mDatabase);
 
-                String where = "_id = ? and group_id = ?";
-                String[] whereValue = {id + "", GROUP_ID};
+            String where = "_id = ? and group_id = ?";
+            String[] whereValue = {id + "", GROUP_ID};
 
-                if (mDatabase.delete(DBHelper.TABLE_USER, where, whereValue) < 0) {
-                    return false;
-                }
+            if (mDatabase.delete(DBHelper.TABLE_USER, where, whereValue) < 0) {
+                return false;
+            }
 
-                setTransactionSuccessful(mDatabase);
-                success = true;
+            setTransactionSuccessful(mDatabase);
+            success = true;
 
         } finally {
             endTransaction(mDatabase);
         }
         return success;
     }
+
     /**
      * 删除单个用户信息
+     *
      * @param userInfo 要删除的用户卡号
      */
     public boolean deleteUser(String userInfo) {
@@ -808,7 +861,6 @@ public class DBManager {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         database.execSQL("delete from " + DBHelper.TABLE_USER);
     }
-
 
 
     //-----------------------------二维码部分 start---------------------------------

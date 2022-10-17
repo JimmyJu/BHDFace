@@ -152,6 +152,7 @@ public class GateConfigUtils {
             SingleBaseConfig.getBaseConfig().setBluetoothSwitch(jsonObject.getInt("switchBluetooth"));
             SingleBaseConfig.getBaseConfig().setVisitorSwitch(jsonObject.getInt("switchVisitor"));
             SingleBaseConfig.getBaseConfig().setLightSwitch(jsonObject.getInt("lightSwitch"));
+            SingleBaseConfig.getBaseConfig().setSignalStrength(jsonObject.getInt("signalStrength"));
 
             return true;
         } catch (Exception e) {
@@ -355,6 +356,11 @@ public class GateConfigUtils {
                 return false;
             }
 
+            int signalStrength = Integer.valueOf(jsonObject.get("signalStrength") + "");
+            if (signalStrength < 0 || signalStrength > 100) {
+                return false;
+            }
+
 
             int rgbAndNirWidth = jsonObject.getInt("rgbAndNirWidth");
             int rgbAndNirHeight = jsonObject.getInt("rgbAndNirHeight");
@@ -447,6 +453,7 @@ public class GateConfigUtils {
             jsonObject.put("switchBluetooth", SingleBaseConfig.getBaseConfig().getBluetoothSwitch());
             jsonObject.put("switchVisitor", SingleBaseConfig.getBaseConfig().getVisitorSwitch());
             jsonObject.put("lightSwitch", SingleBaseConfig.getBaseConfig().getLightSwitch());
+            jsonObject.put("signalStrength", SingleBaseConfig.getBaseConfig().getSignalStrength());
 
             // 修改内容写入配置文件
             FileUtils.writeTxtFile(jsonObject.toString(), filePath);

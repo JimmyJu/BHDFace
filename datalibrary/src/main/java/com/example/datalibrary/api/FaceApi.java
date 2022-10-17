@@ -5,6 +5,7 @@ package com.example.datalibrary.api;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.example.datalibrary.db.DBManager;
 import com.example.datalibrary.listener.DBLoadListener;
@@ -447,6 +448,26 @@ public class FaceApi {
         this.users = users;
     }
 
+
+    /**
+     * 删除访客信息
+     */
+    public void visitorDelete() {
+        //查询所有访客用户 （userList携带楼层号的访客用户）
+        List<User> userList = DBManager.getInstance().queryVisitor();
+        if (userList != null && userList.size() > 0) {
+            for (int i = 0; i < userList.size(); i++) {
+                String userInfo = userList.get(i).getUserInfo();
+
+                boolean b = userDelete(userInfo);
+                if (b) {
+                    Log.d("TAG", "访客: " + userInfo + " 删除: 成功");
+                } else {
+                    Log.e("TAG", "访客: " + userInfo + " 删除: 失败");
+                }
+            }
+        }
+    }
 
 
     //-----------------------------二维码部分 start---------------------------------

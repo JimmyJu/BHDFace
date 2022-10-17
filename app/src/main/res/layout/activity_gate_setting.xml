@@ -283,7 +283,7 @@
 
                         <TextView
                             style="@style/configTextStyle"
-                            android:text="其它" />
+                            android:text="其它设定" />
 
                         <LinearLayout style="@style/configInnerImageLayout">
 

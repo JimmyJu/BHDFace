@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -67,19 +68,32 @@ import com.baidu.idl.face.main.utils.SPUtils;
 import com.baidu.idl.face.main.utils.ScanUtils;
 import com.baidu.idl.face.main.utils.SoundPoolUtil;
 import com.baidu.idl.face.main.utils.ToastUtils;
+import com.baidu.idl.face.main.utils.UdpMessageTool;
 import com.baidu.idl.face.main.utils.Utils;
 import com.baidu.idl.facesdkdemo.R;
 import com.baidu.idl.main.facesdk.FaceInfo;
+import com.baidu.idl.main.facesdk.model.BDFaceImageInstance;
+import com.baidu.idl.main.facesdk.model.BDFaceOcclusion;
+import com.baidu.idl.main.facesdk.model.BDFaceSDKCommon;
+import com.baidu.idl.main.facesdk.registerlibrary.user.callback.RemoveStaffCallback;
+import com.baidu.idl.main.facesdk.registerlibrary.user.manager.UserInfoManager;
+import com.baidu.idl.main.facesdk.registerlibrary.user.model.ImportFeatureResult;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.model.QR;
 import com.example.datalibrary.model.User;
 import com.example.yfaceapi.GPIOManager;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -155,7 +169,7 @@ public class FaceRGBGateActivity extends BaseActivity {
      * ibeacon信号强度值:
      * 值越小，ibeacon设备距离蓝牙模块越近，通过判断这个值的大小确定距离
      */
-    private static final int SIGNAL_STRENGTH = 70;
+//    private static final int SIGNAL_STRENGTH = 70;
 
     /**
      * 蓝牙扫描
@@ -168,7 +182,7 @@ public class FaceRGBGateActivity extends BaseActivity {
 
     private BluetoothManager mBluetoothManager;
 
-    //-------------------------------人脸检测上传start------------------------------------------------
+    //-------------------------------人脸检测、上传start--------------------------------------------
     /**
      * 卡号
      */
@@ -212,12 +226,84 @@ public class FaceRGBGateActivity extends BaseActivity {
     private Boolean switchPortNum = false;
     int flag = 0;
 
-    //-------------------------------------end----------------------------------------
+    //-------------------------------------人脸检测、上传end----------------------------------------
 
+    //-------------------------------------访客udp服务start----------------------------------------
 
+    //sendByte1 + 终端ID（2）
+    private byte[] sendByte1 = new byte[]{(byte) 0x81, (byte) 0x38, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x80, (byte) 0x01, (byte) 0x00, (byte) 0x01, (byte) 0x00,
+            (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00};
 
+    //sendByte2 + 用户卡号（16）
+    private byte[] sendByte2 = new byte[]{(byte) 0x14, (byte) 0x00, (byte) 0x01};
 
+    //所在楼层（1） +sendByte3
+    private byte[] sendByte3 = new byte[]{(byte) 0x00};
 
+    //目的楼层 + sendByte4
+    private byte[] sendByte4 = new byte[]{(byte) 0x00, (byte) 0x01, (byte) 0xFF};
+
+    //人脸寄存器地址
+    private final byte[] faceAddress = new byte[]{(byte) 0x00, (byte) 0x45};
+
+    //二维码寄存器地址
+    private final byte[] qrCodeAddress = new byte[]{(byte) 0x00, (byte) 0x46};
+
+    //数据删除地址
+    private final byte[] deleteAddress = new byte[]{(byte) 0x00, (byte) 0x47};
+
+    //心跳寄存器地址
+    private final byte[] heartbeatAddress = new byte[]{(byte) 0x00, (byte) 0x48};
+
+    //删除单个访客记录
+    private final byte[] deleteSingleAddress = new byte[]{(byte) 0x00, (byte) 0x49};
+
+    //数据长度（4）
+    private final byte[] dataLength = new byte[]{0x00, 0x00, 0x00, 0x00};
+
+    //人脸数据包
+    private final byte[] response = new byte[]{(byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xAA, 0x55, 0x00, 0x45};
+    //二维码数据包
+    private final byte[] qrCodeResponse = new byte[]{(byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xAA, 0x55, 0x00, 0x46};
+    //删除指令数据包
+    private final byte[] deleteResponse = new byte[]{(byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xAA, 0x55, 0x00, 0x47, 0x00, 0x00, 0x00, 0x00};
+    //心跳包
+    private final byte[] heartbeatResponse = new byte[]{(byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xAA, 0x55, 0x00, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    //删除单个访客数据包
+    private final byte[] deleteSingleResponse = new byte[]{(byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xFE, (byte) 0xAA, 0x55, 0x00, 0x49};
+
+    private final byte[] ok = new byte[]{0x4F, 0x4B, 0x00, 0x00};//操作成功
+    private final byte[] er = new byte[]{0x45, 0x52, 0x00, 0x00};//操作失败
+    private final byte[] face_er = new byte[]{0x41, 0x51, 0x00, 0x00};//人脸头像特征无法获取
+    private final byte[] qr_er = new byte[]{0x42, 0x52, 0x00, 0x00};//二维码添加失败
+    private final byte[] delete_er = new byte[]{0x43, 0x53, 0x00, 0x00};//数据删除失败
+    private final byte[] packet_loss_er = new byte[]{0x44, 0x54, 0x00, 0x00};//数据丢包
+
+    private int terminalId = 0;
+
+    private int floorId = 0;
+
+    private UdpMessageTool mUdpMessageTool = null;
+    // 发送ip
+    private String HOST = "192.168.0.81";
+    // 发送端口号
+    private int PORT = 8899;
+    //接收端口号
+    private int RECEIVE_PORT = 8980;
+    //接收线程的循环标识
+    private boolean isRunning = true;
+
+    private DatagramSocket receiveSocket;
+    private InetAddress serverAddr;
+    //    private byte[] receiveInfo;     //接收报文信息
+    private DatagramSocket sendSocket = null;
+
+    private UdpReceiveThread mUdpReceiveThread;
+
+    //-------------------------------------访客udp服务end------------------------------------------
 
 
     //动态对比数
@@ -254,6 +340,12 @@ public class FaceRGBGateActivity extends BaseActivity {
         //扫描BLE设备
         if (SingleBaseConfig.getBaseConfig().getBluetoothSwitch() == 1) {
             scanLeDevice();
+        }
+
+        //进入Activity时开启接收报文线程
+        if (SingleBaseConfig.getBaseConfig().getVisitorSwitch() == 1) {
+            mUdpReceiveThread = new UdpReceiveThread();
+            mUdpReceiveThread.start();
         }
 
         // 屏幕的宽
@@ -1302,9 +1394,10 @@ public class FaceRGBGateActivity extends BaseActivity {
                     String uuid = iBeaconInfo.uuid;
                     if (!TextUtils.isEmpty(uuid)) {
                         //根据信号强度值大小 确定距离
-                        if (Math.abs(iBeaconInfo.rssi) < SIGNAL_STRENGTH) {
+                        if (Math.abs(iBeaconInfo.rssi) < SingleBaseConfig.getBaseConfig().getSignalStrength()) {
                             String replace = uuid.replace("-", "");
-                            Log.d("TAG", "uuid: " + uuid + ", 距离 " + Math.abs(iBeaconInfo.rssi));
+                            Log.d("TAG", "uuid: " + uuid + ", 距离 " + Math.abs(iBeaconInfo.rssi) +
+                                    " 设定距离：" + SingleBaseConfig.getBaseConfig().getSignalStrength());
 //                            Log.d("TAG", "onScanResult: " + replace);
                             String key = replace.substring(0, 16);
                             String encodeStr = replace.substring(16);
@@ -1361,6 +1454,388 @@ public class FaceRGBGateActivity extends BaseActivity {
 
     }
 
+    List<byte[]> listBytes = new ArrayList<>();
+    private boolean face_udp_flag = false;
+    private boolean length_flag = false;
+    int srcLength = 0;
+    int dataHeartbeatLength = 0;
+    byte[] serialNumber_head = new byte[1];
+
+    /**
+     * --------------------------------访客部分--------------------------------------------------
+     * UDP数据接收线程
+     */
+    public class UdpReceiveThread extends Thread {
+        public void run() {
+            try {
+                Log.e("TAG", "UdpReceiveThread启动.... ");
+                receiveSocket = new DatagramSocket(RECEIVE_PORT);
+                serverAddr = InetAddress.getByName(HOST);
+                while (isRunning) {
+                    byte[] inBuf = new byte[1024 * 1024];
+                    DatagramPacket inPacket = new DatagramPacket(inBuf, inBuf.length);
+                    receiveSocket.receive(inPacket);
+
+                    byte[] receiveInfo_des = inPacket.getData();
+                    byte[] data = new byte[inPacket.getLength()];
+                    System.arraycopy(receiveInfo_des, 0, data, 0, inPacket.getLength());
+
+                    Log.e("TAG", "加密源: " + Arrays.toString(data));
+                    Log.e("TAG", "加密源——>bytesToHex: " + ByteUtils.bytesToHex(data));
+                    //DES解密
+                    byte[] receiveInfo = Utils.decryptDES(data, "Lookyxyx");
+                    //服务返回的字节
+                    byte[] buffer = new byte[receiveInfo.length];
+                    System.arraycopy(receiveInfo, 0, buffer, 0, receiveInfo.length);
+
+
+                    //--------------------------------start-----------------------------------------------
+
+                    int receiveLength = buffer.length;
+                    Log.e("TAG", "解密后-->receive_UDP_Length----> " + receiveLength);
+                    Log.e("TAG", "解密后-->bytesToHex: " + ByteUtils.bytesToHex(buffer));
+
+                    //14说明收到心跳包或者删除指令
+                    if (receiveLength == 14) {
+                        //寄存器起始地址
+                        byte[] category = new byte[2];
+                        System.arraycopy(buffer, 6, category, 0, 2);
+
+                        byte[] lengthInBytes1 = new byte[4];
+                        System.arraycopy(buffer, 8, lengthInBytes1, 0, 4);
+                        String length1 = Utils.byteToHex(lengthInBytes1);
+                        dataHeartbeatLength = new BigInteger(length1, 16).intValue();
+                        Log.i("TAG", "接收到的(删除or心跳)长度: " + Arrays.toString(lengthInBytes1) + "------>" + dataHeartbeatLength);
+
+
+                        //数据删除
+                        if (Arrays.equals(category, deleteAddress)) {
+                            FaceApi.getInstance().visitorDelete();
+                            boolean bRet = FaceApi.getInstance().deleteQr();
+                            if (bRet) {
+                                // 数据变化，更新内存
+                                FaceSDKManager.getInstance().initDataBases(getApplicationContext());
+                                //成功
+                                byte[] sendBytesDes = Utils.concat(deleteResponse, ok);
+                                byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                receiveSocket.send(dp);
+                                Log.i("TAG", "数据删除 " + bRet);
+                            } else {
+                                //失败
+                                byte[] sendBytesDes = Utils.concat(deleteResponse, delete_er);
+                                byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                receiveSocket.send(dp);
+                            }
+                            //接收到心跳
+                        } else if (Arrays.equals(category, heartbeatAddress)) {
+                            byte[] sendBytes = Utils.encryptDES(heartbeatResponse, "Lookyxyx");
+                            DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                            receiveSocket.send(dp);
+                        }
+
+                    } else if (receiveLength == 18) {
+                        //删除单个访客信息
+                        //寄存器起始地址
+                        byte[] category = new byte[2];
+                        System.arraycopy(buffer, 6, category, 0, 2);
+
+                        byte[] lengthInBytes = new byte[4];
+                        System.arraycopy(buffer, 12, lengthInBytes, 0, 4);
+                        String length1 = Utils.byteToHex(lengthInBytes);
+                        int deleteSingleLength = new BigInteger(length1, 16).intValue();
+                        Log.i("TAG", "接收到的(删除or心跳)长度: " + Arrays.toString(lengthInBytes) + "------>" + deleteSingleLength);
+                        //fefefefeaa55004911111233000000120000
+                        if (Arrays.equals(category, deleteSingleAddress)) {
+                            byte[] cardByte = new byte[4];
+                            System.arraycopy(buffer, 8, cardByte, 0, 4);
+
+                            //卡号
+                            String card = Utils.byteToHex(cardByte);
+                            Log.e("TAG", "card-----------: " + card);
+
+                            //删除单个用户信息
+                            UserInfoManager.getInstance().deleteUserInfo(card);
+                            UserInfoManager.getInstance().setRemoveStaffCallback(new RemoveStaffCallback() {
+                                @Override
+                                public void removeStaffSuccess() {
+                                    Log.e("TAG", "删除单个用户信息: 成功");
+                                    // 数据变化，更新内存
+                                    FaceSDKManager.getInstance().initDataBases(getApplicationContext());
+                                    byte[] sendBytes1 = Utils.addBytes(deleteSingleResponse, cardByte, dataLength);
+                                    byte[] sendBytesDes = Utils.concat(sendBytes1, ok);
+                                    byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                    DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                    try {
+                                        receiveSocket.send(dp);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void removeStaffFailure() {
+                                    Log.e("TAG", "删除单个用户信息: 失败");
+                                    byte[] sendBytes1 = Utils.addBytes(deleteSingleResponse, cardByte, dataLength);
+                                    byte[] sendBytesDes = Utils.concat(sendBytes1, er);
+                                    byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                    DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                    try {
+                                        receiveSocket.send(dp);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+
+                        }
+
+                    } else if (receiveLength > 18) {
+                        if (!length_flag) {
+                            length_flag = true;
+                            //字节总长度
+                            byte[] lengthInBytes = new byte[4];
+                            System.arraycopy(buffer, 9, lengthInBytes, 0, 4);
+
+                            //序号
+                            serialNumber_head = new byte[1];
+                            System.arraycopy(buffer, 8, serialNumber_head, 0, 1);
+
+                            String length = Utils.byteToHex(lengthInBytes);
+                            srcLength = new BigInteger(length, 16).intValue();
+                            Log.i("TAG", "接收到的字节长度: " + Arrays.toString(lengthInBytes) + "：：" + srcLength);
+                        }
+
+
+                        //寄存器起始地址
+                        byte[] category = new byte[2];
+                        System.arraycopy(receiveInfo, 6, category, 0, 2);
+
+                        //获取最后两位
+                        byte[] checkByte = new byte[2];
+                        System.arraycopy(buffer, buffer.length - 2, checkByte, 0, 2);
+
+                        if (!Utils.byteToHex(checkByte).equals("0000")) {
+                            //不是完整的包
+                            listBytes.add(buffer);
+                            face_udp_flag = true;
+
+                        } else {
+                            if (!face_udp_flag) {
+                                //二维码
+                                if (Arrays.equals(category, qrCodeAddress)) {
+                                    byte[] floorByte = new byte[1];
+                                    byte[] nameByte = new byte[20];
+                                    byte[] cardByte = new byte[4];
+
+                                    //序号
+                                    byte[] serialNumber = new byte[1];
+                                    System.arraycopy(receiveInfo, 8, serialNumber, 0, 1);
+
+                                    //楼层ID
+                                    System.arraycopy(receiveInfo, 13, floorByte, 0, 1);
+                                    //人员名
+                                    System.arraycopy(receiveInfo, 14, nameByte, 0, 20);
+                                    //卡号
+                                    System.arraycopy(receiveInfo, 34, cardByte, 0, 4);
+
+                                    //楼层ID
+                                    String floor = Utils.byteToHex(floorByte);
+                                    //卡号
+                                    String card = Utils.byteToHex(cardByte);
+                                    //人名
+                                    String username = null;
+                                    try {
+                                        username = new String(nameByte, "GB2312");
+                                    } catch (UnsupportedEncodingException e) {
+                                        e.printStackTrace();
+                                    }
+                                    boolean ret = FaceApi.getInstance().registerQrIntoDBmanager(username.trim(), card, floor);
+                                    if (ret) {
+                                        //成功
+                                        byte[] sendBytes1 = Utils.addBytes(qrCodeResponse, serialNumber, dataLength);
+                                        byte[] sendBytesDes = Utils.concat(sendBytes1, ok);
+                                        byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                        DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                        receiveSocket.send(dp);
+                                        Log.i("TAG", "插入 QR信息 " + username.trim() + " 卡号 " + card + " 楼层ID " + floor);
+                                    } else {
+                                        //失败
+                                        byte[] sendBytes1 = Utils.addBytes(qrCodeResponse, serialNumber, dataLength);
+                                        byte[] sendBytesDes = Utils.concat(sendBytes1, qr_er);
+                                        byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                        DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                        receiveSocket.send(dp);
+                                    }
+                                    length_flag = false;
+                                }
+                            } else {
+                                byte[] concatByte = new byte[1024 * 1024 * 10];
+//                            byte[] concatByte = new byte[srcLength];
+                                listBytes.add(buffer);
+                                //拼接字节数组
+                                for (int i = 0; i < listBytes.size() - 1; i++) {
+                                    if (i == 0) {
+                                        concatByte = Utils.concat(listBytes.get(i), listBytes.get(i + 1));
+                                    } else {
+                                        concatByte = Utils.concat(concatByte, listBytes.get(i + 1));
+                                    }
+                                }
+
+//                            byte[] dataLength = new byte[4];
+//                            //数据长度
+//                            System.arraycopy(concatByte, 8, dataLength, 0, 4);
+                                Log.e("TAG", "拼接后字节长度: " + concatByte.length);
+                                Log.e("TAG", "拼接后字节: " + Arrays.toString(concatByte));
+                                String s = ByteUtils.bytesToHex(concatByte);
+                                Log.e("TAG", "拼接后字节: " + s);
+//                            if (length == concatByte.length) {
+                                //拼接后的字节与接收到的字节比较
+                                if (concatByte.length == srcLength) {
+                                    //拼接后的起始地址
+                                    byte[] spliceAddress = new byte[2];
+                                    System.arraycopy(concatByte, 6, spliceAddress, 0, 2);
+                                    //拼接后的人脸数据
+                                    if (Arrays.equals(spliceAddress, faceAddress)) {
+                                        Bitmap imgBitmap = null;
+                                        int imgLength = concatByte.length - 39;
+                                        byte[] floorByte = new byte[1];
+                                        byte[] nameByte = new byte[20];
+                                        byte[] cardByte = new byte[4];
+                                        byte[] imgByte = new byte[imgLength];
+
+                                        //序号
+                                        byte[] serialNumber = new byte[1];
+                                        System.arraycopy(concatByte, 8, serialNumber, 0, 1);
+
+                                        //楼层ID
+                                        System.arraycopy(concatByte, 13, floorByte, 0, 1);
+                                        //人员名
+                                        System.arraycopy(concatByte, 14, nameByte, 0, 20);
+                                        //卡号
+                                        System.arraycopy(concatByte, 34, cardByte, 0, 4);
+                                        //img
+                                        System.arraycopy(concatByte, 38, imgByte, 0, imgLength);
+
+                                        //楼层ID
+                                        String floor = Utils.byteToHex(floorByte);
+                                        //卡号
+                                        String card = Utils.byteToHex(cardByte);
+                                        //人名
+                                        String username = null;
+                                        try {
+                                            username = new String(nameByte, "GB2312");
+                                        } catch (UnsupportedEncodingException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        try {
+                                            imgBitmap = Bytes2Bimap(imgByte);
+                                            Log.e("TAG", "floor " + floor);
+                                            Log.e("TAG", "card " + card);
+                                            Log.e("TAG", "username " + username.trim());
+                                            String s1 = ByteUtils.bytesToHex(imgByte);
+                                            Log.e("TAG", username.trim() + "->img " + s1);
+
+                                            byte[] bytes = new byte[512];
+
+                                            //特征值获取
+                                            ImportFeatureResult result;
+                                            // 判断是否提取成功：128为成功，-1为参数为空，-2表示未检测到人脸
+                                            result = getFeature(imgBitmap, bytes,
+                                                    BDFaceSDKCommon.FeatureType.BDFACE_FEATURE_TYPE_LIVE_PHOTO);
+                                            Log.i("TAG", "live_photo = " + result.getResult());
+
+                                            if (result.getResult() == 128) {
+                                                //库库中查询卡号
+                                                String dbCard = FaceApi.getInstance().getUserCardByUserCard(card);
+                                                Log.i("TAG", "已存在db_Card: " + dbCard);
+                                                if (!dbCard.equals(card)) {
+                                                    FaceApi.getInstance().registerUserIntoDBmanager(null, username.trim(), floor, card, bytes);
+                                                    // 数据变化，更新内存
+                                                    FaceSDKManager.getInstance().initDataBases(getApplicationContext());
+                                                    Log.i("TAG", "插入 用户 " + username.trim() + " 卡号 " + card + " 楼层ID " + floor);
+                                                }
+                                                byte[] sendBytes1 = Utils.addBytes(response, serialNumber, dataLength);
+                                                byte[] sendBytesDes = Utils.concat(sendBytes1, ok);
+                                                byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                                DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                                receiveSocket.send(dp);
+                                                listBytes.clear();
+                                            } else {
+                                                //特征值获取失败
+                                                byte[] sendBytes1 = Utils.addBytes(response, serialNumber, dataLength);
+                                                byte[] sendBytesDes = Utils.concat(sendBytes1, face_er);
+                                                byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                                DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                                receiveSocket.send(dp);
+                                                listBytes.clear();
+                                            }
+
+                                            face_udp_flag = false;
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        } finally {
+                                            if (imgBitmap != null && !imgBitmap.isRecycled()) {
+                                                imgBitmap.recycle();
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    //数据丢包
+                                    byte[] sendBytes1 = Utils.addBytes(response, serialNumber_head, dataLength);
+                                    byte[] sendBytesDes = Utils.concat(sendBytes1, packet_loss_er);
+                                    byte[] sendBytes = Utils.encryptDES(sendBytesDes, "Lookyxyx");
+                                    DatagramPacket dp = new DatagramPacket(sendBytes, sendBytes.length, inPacket.getAddress(), inPacket.getPort());
+                                    receiveSocket.send(dp);
+                                }
+                                length_flag = false;
+                                face_udp_flag = false;
+
+                                srcLength = 0;
+                                listBytes.clear();
+                            }
+                        }
+
+
+                    }
+
+
+                    //------------------------------------end-------------------------------------------
+
+                    /*String info = new String(receiveInfo, 0, inPacket.getLength());
+                    Log.e("TAG", "寄存器起始地址 " + Arrays.toString(category));
+                    Log.e("TAG", "receiveIP: " + inPacket.getAddress() + ": " + inPacket.getPort());
+                    Log.e("TAG", "bytesToHex: " + ByteUtils.bytesToHex(buffer));
+                    Log.e("TAG", "receiveInfo: " + Arrays.toString(buffer));
+                    Log.e("TAG", "receive-length: " + inPacket.getLength());
+                    Log.e("TAG", "info-length: " + info.length());
+                    Log.e("TAG", "buffer-length: " + buffer.length);
+                    Log.e("TAG", "checkByte: " + Utils.byteToHex(checkByte));*/
+
+
+                    //存储地址
+                    /*SPUtils.put(mContext, "remoteIp", inPacket.getAddress().getHostAddress());
+                    SPUtils.put(mContext, "remotePort", String.valueOf(inPacket.getPort()));*/
+
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+
+    public Bitmap Bytes2Bimap(byte[] b) {
+        if (b.length != 0) {
+            return BitmapFactory.decodeByteArray(b, 0, b.length);
+        } else {
+            return null;
+        }
+    }
 
     //QR有效的二维码
     private void validView(String card) {
@@ -1388,6 +1863,134 @@ public class FaceRGBGateActivity extends BaseActivity {
         nameText.setTextColor(Color.parseColor("#0dc6ff"));
         nameText.setText("蓝牙信号:" + card);
     }
+
+
+    /**
+     * 提取特征值
+     */
+    public ImportFeatureResult getFeature(Bitmap bitmap, byte[] feature, BDFaceSDKCommon.FeatureType featureType) {
+        if (bitmap == null) {
+            return new ImportFeatureResult(2, null);
+        }
+
+        BDFaceImageInstance imageInstance = new BDFaceImageInstance(bitmap);
+        // 最大检测人脸，获取人脸信息
+        FaceInfo[] faceInfos = com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.getInstance().getFaceDetect()
+                .detect(BDFaceSDKCommon.DetectType.DETECT_VIS, imageInstance);
+        if (faceInfos == null || faceInfos.length == 0) {
+            imageInstance.destory();
+            // 图片外扩
+            Bitmap broadBitmap = com.baidu.idl.main.facesdk.registerlibrary.user.utils.BitmapUtils.broadImage(bitmap);
+            imageInstance = new BDFaceImageInstance(broadBitmap);
+            // 最大检测人脸，获取人脸信息
+            faceInfos = com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.getInstance().getFaceDetect()
+                    .detect(BDFaceSDKCommon.DetectType.DETECT_VIS, imageInstance);
+            // 若外扩后还未检测到人脸，则旋转图片检测
+            if (faceInfos == null || faceInfos.length == 0) {
+                return new ImportFeatureResult(/*rotationDetection(broadBitmap , 90)*/8, null);
+            }
+        }
+        // 判断多人脸
+        if (faceInfos.length > 1) {
+            imageInstance.destory();
+            return new ImportFeatureResult(9, null);
+        }
+        FaceInfo faceInfo = faceInfos[0];
+        // 判断质量
+        int quality = onQualityCheck(faceInfo);
+        if (quality != 0) {
+            return new ImportFeatureResult(quality, null);
+        }
+        // 人脸识别，提取人脸特征值
+        float ret = com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.getInstance().getFaceFeature().feature(
+                featureType, imageInstance,
+                faceInfo.landmarks, feature);
+        // 人脸抠图
+        /*BDFaceImageInstance cropInstance = FaceSDKManager.getInstance().getFaceCrop()
+                .cropFaceByLandmark(imageInstance, faceInfo.landmarks,
+                        2.0f, true, new AtomicInteger());
+        if (cropInstance == null) {
+            imageInstance.destory();
+            return new ImportFeatureResult(10, null);
+        }
+
+        Bitmap cropBmp = BitmapUtils.getInstaceBmp(cropInstance);
+        cropInstance.destory();*/
+        imageInstance.destory();
+        return new ImportFeatureResult(ret, null);
+    }
+
+
+    /**
+     * 质量检测结果过滤，如果需要质量检测，
+     * 需要调用 SingleBaseConfig.getBaseConfig().setQualityControl(true);设置为true，
+     * 再调用  FaceSDKManager.getInstance().initConfig() 加载到底层配置项中
+     *
+     * @return
+     */
+    public int onQualityCheck(FaceInfo faceInfo) {
+
+        if (!com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().isQualityControl()) {
+            return 0;
+        }
+
+        if (faceInfo != null) {
+
+            // 角度过滤
+            if (Math.abs(faceInfo.yaw) > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getYaw()) {
+                return 4;
+            } else if (Math.abs(faceInfo.roll) > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getRoll()) {
+                return 4;
+            } else if (Math.abs(faceInfo.pitch) > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getPitch()) {
+                return 4;
+            }
+
+            // 模糊结果过滤
+            float blur = faceInfo.bluriness;
+            if (blur > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getBlur()) {
+                return 5;
+            }
+
+            // 光照结果过滤
+            float illum = faceInfo.illum;
+            if (illum < com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getIllumination()) {
+                return 7;
+            }
+
+
+            // 遮挡结果过滤
+            if (faceInfo.occlusion != null) {
+                BDFaceOcclusion occlusion = faceInfo.occlusion;
+
+                if (occlusion.leftEye > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getLeftEye()) {
+                    // 左眼遮挡置信度
+                    return 6;
+                } else if (occlusion.rightEye > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getRightEye()) {
+                    // 右眼遮挡置信度
+                    return 6;
+                } else if (occlusion.nose > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getNose()) {
+                    // 鼻子遮挡置信度
+                    return 6;
+                } else if (occlusion.mouth > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getMouth()) {
+                    // 嘴巴遮挡置信度
+                    return 6;
+                } else if (occlusion.leftCheek > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getLeftCheek()) {
+                    // 左脸遮挡置信度
+                    return 6;
+                } else if (occlusion.rightCheek > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getRightCheek()) {
+                    // 右脸遮挡置信度
+                    return 6;
+                } else if (occlusion.chin > com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig.getBaseConfig().getChinContour()) {
+                    // 下巴遮挡置信度
+                    return 6;
+                } else {
+                    return 0;
+                }
+            }
+        }
+        return 0;
+    }
+
 
     /**
      * 释放资源
@@ -1421,6 +2024,9 @@ public class FaceRGBGateActivity extends BaseActivity {
         CameraPreviewManager.getInstance().stopPreview();
         //二维码声音释放
         mSoundPoolUtil.release();
+
+        //访客循环标示
+        isRunning = false;
 
         //关闭时间监听
         timeFlagBool = false;

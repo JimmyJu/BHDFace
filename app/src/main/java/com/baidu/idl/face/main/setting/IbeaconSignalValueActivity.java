@@ -10,21 +10,22 @@ import com.baidu.idl.face.main.utils.GateConfigUtils;
 import com.baidu.idl.facesdkdemo.R;
 
 /**
- * 设置继电器闭合时间
+ * ibeacon信号强度值
  */
+public class IbeaconSignalValueActivity extends BaseActivity {
 
-public class RelayActivity extends BaseActivity {
     private EditText rmtEtThreshold;
     private int initValue;
-    private int zero = 1;
-    private static final int hundered = 20;
+    private int zero = 10;
+    private static final int hundered = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_relay);
+        setContentView(R.layout.activity_ibeacon_signal_value);
 
-        initValue = SingleBaseConfig.getBaseConfig().getRelayTime();
+        //初始值
+        initValue = SingleBaseConfig.getBaseConfig().getSignalStrength();
         init();
     }
 
@@ -34,7 +35,7 @@ public class RelayActivity extends BaseActivity {
         rmtEtThreshold = findViewById(R.id.rmt_etthreshold);
         Button rmtSave = findViewById(R.id.rmt_save);
 
-        rmtEtThreshold.setText(SingleBaseConfig.getBaseConfig().getRelayTime() + "");
+        rmtEtThreshold.setText(SingleBaseConfig.getBaseConfig().getSignalStrength() + "");
 
         rmtDecrease.setOnClickListener(v -> {
             if (initValue > zero && initValue <= hundered) {
@@ -51,7 +52,7 @@ public class RelayActivity extends BaseActivity {
         });
 
         rmtSave.setOnClickListener(v -> {
-            SingleBaseConfig.getBaseConfig().setRelayTime(Integer.valueOf(rmtEtThreshold.getText().toString()));
+            SingleBaseConfig.getBaseConfig().setSignalStrength(Integer.valueOf(rmtEtThreshold.getText().toString()));
             GateConfigUtils.modityJson();
             finish();
         });

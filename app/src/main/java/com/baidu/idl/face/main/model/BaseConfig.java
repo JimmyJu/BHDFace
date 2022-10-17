@@ -207,6 +207,20 @@ public class BaseConfig {
     //白色补光灯开关, 0:不开启, 1:开启
     private int lightSwitch = 0;
 
+    /**
+     * ibeacon信号强度值:
+     * 值越小，ibeacon设备距离蓝牙模块越近，通过判断这个值的大小确定距离
+     */
+    private int signalStrength = 60;
+
+    public int getSignalStrength() {
+        return signalStrength;
+    }
+
+    public void setSignalStrength(int signalStrength) {
+        this.signalStrength = signalStrength;
+    }
+
     public int getLightSwitch() {
         return lightSwitch;
     }

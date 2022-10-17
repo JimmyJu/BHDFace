@@ -44,8 +44,14 @@ public class OtherSettingActivity extends BaseActivity implements View.OnClickLi
         LinearLayout ll_crl_light = findViewById(R.id.ll_crl_light);
         ll_crl_light.setOnClickListener(this);
 
+        //密码修改
         LinearLayout ll_paw_change = findViewById(R.id.ll_paw_change);
         ll_paw_change.setOnClickListener(this);
+
+        //ibeacon_signal_value
+        LinearLayout ll_ibeacon_signal_value = findViewById(R.id.ll_ibeacon_signal_value);
+        ll_ibeacon_signal_value.setOnClickListener(this);
+
 
         qcSave = findViewById(R.id.qc_save);
         qcSave.setOnClickListener(this);
@@ -72,6 +78,8 @@ public class OtherSettingActivity extends BaseActivity implements View.OnClickLi
             startActivity(new Intent(OtherSettingActivity.this, LightActivity.class));
         } else if (id == R.id.ll_paw_change) {
             startActivity(new Intent(OtherSettingActivity.this, PasswordActivity.class));
+        } else if (id == R.id.ll_ibeacon_signal_value) {
+            startActivity(new Intent(OtherSettingActivity.this, IbeaconSignalValueActivity.class));
         }
 
     }

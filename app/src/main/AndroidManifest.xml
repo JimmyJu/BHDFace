@@ -87,6 +87,7 @@
         <activity android:name="com.baidu.idl.face.main.setting.ExtendedFunctionActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.LightActivity" />
         <activity android:name="com.baidu.idl.face.main.setting.PasswordActivity" />
+        <activity android:name="com.baidu.idl.face.main.setting.IbeaconSignalValueActivity"/>
         <activity
             android:name="com.baidu.idl.face.main.activity.start.StartActivity"
             android:launchMode="singleTop">

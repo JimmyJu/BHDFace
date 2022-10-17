@@ -43,7 +43,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="其它设定"
+                    android:text="其它功能相关设定"
                     android:textColor="@color/gate_white"
                     android:textSize="25sp" />
             </RelativeLayout>
@@ -128,6 +128,27 @@
                     style="@style/configTextStyle"
                     android:layout_height="wrap_content"
                     android:text="继电器时间" />
+
+                <LinearLayout style="@style/configInnerImageLayout">
+
+                    <ImageView style="@style/configInnerImage" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.3dp"
+                android:background="#333333" />
+
+            <LinearLayout
+                android:id="@+id/ll_ibeacon_signal_value"
+                android:layout_width="match_parent"
+                android:layout_height="60dp">
+
+                <TextView
+                    style="@style/configTextStyle"
+                    android:layout_height="wrap_content"
+                    android:text="ibeacon信号值" />
 
                 <LinearLayout style="@style/configInnerImageLayout">
 
