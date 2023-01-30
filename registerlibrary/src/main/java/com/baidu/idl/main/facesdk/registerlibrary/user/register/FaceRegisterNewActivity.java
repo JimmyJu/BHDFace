@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -28,6 +29,7 @@ import com.baidu.idl.main.facesdk.registerlibrary.user.camera.CameraPreviewManag
 import com.baidu.idl.main.facesdk.registerlibrary.user.listener.SdkInitListener;
 import com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager;
 import com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceTrackManager;
+import com.baidu.idl.main.facesdk.registerlibrary.user.model.LivenessModel;
 import com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.BitmapUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.DensityUtils;
@@ -37,7 +39,6 @@ import com.baidu.idl.main.facesdk.registerlibrary.user.utils.KeyboardsUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.ToastUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.view.CircleImageView;
 import com.baidu.idl.main.facesdk.registerlibrary.user.view.FaceRoundProView;
-import com.baidu.idl.main.facesdk.registerlibrary.user.model.LivenessModel;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.model.User;
 
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 新人脸注册页面
+ * 新人脸注册页面  RGB
  * Created by v_liujialu01 on 2020/02/19.
  */
 public class FaceRegisterNewActivity extends BaseActivity implements View.OnClickListener {
@@ -63,8 +64,8 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     // 采集相关布局
     private RelativeLayout mRelativeCollectSuccess;
     private CircleImageView mCircleHead;
-    private EditText mEditName;
-    private TextView mTextError;
+    private EditText mEditName, mEditCardNumber;
+    private TextView mTextError, mCardError;
     private Button mBtnCollectConfirm;
     private ImageView mImageInputClear;
 
@@ -77,6 +78,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     private byte[] mFeatures = new byte[512];
     private Bitmap mCropBitmap;
     private boolean mCollectSuccess = false;
+
+    private TextChange mTextChange;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,7 +131,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         mCircleHead.setBorderWidth(DensityUtils.dip2px(FaceRegisterNewActivity.this, 3));
         mCircleHead.setBorderColor(Color.parseColor("#0D9EFF"));
         mEditName = findViewById(R.id.edit_name);
+        mEditCardNumber = findViewById(R.id.edit_card_number);
         mTextError = findViewById(R.id.text_error);
+        mCardError = findViewById(R.id.card_error);
         mBtnCollectConfirm = findViewById(R.id.btn_collect_confirm);
         mBtnCollectConfirm.setOnClickListener(this);
         mImageInputClear = findViewById(R.id.image_input_delete);
@@ -141,6 +147,12 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         ImageView imageBack = findViewById(R.id.image_register_back);
         imageBack.setOnClickListener(this);
 
+        mTextChange = new TextChange();
+        mEditName.addTextChangedListener(mTextChange);
+        mEditCardNumber.addTextChangedListener(mTextChange);
+
+        Log.i(TAG, "脱机状态人脸录入类别: " + SingleBaseConfig.getBaseConfig().getType());
+
         // 输入框监听事件
         mEditName.addTextChangedListener(new TextWatcher() {
             @Override
@@ -151,23 +163,24 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() > 0) {
-                    mImageInputClear.setVisibility(View.VISIBLE);
-                    mBtnCollectConfirm.setEnabled(true);
-                    mBtnCollectConfirm.setTextColor(Color.WHITE);
-                    mBtnCollectConfirm.setBackgroundResource(R.drawable.button_selector);
+//                    mImageInputClear.setVisibility(View.VISIBLE);
+//                    mBtnCollectConfirm.setEnabled(true);
+//                    mBtnCollectConfirm.setTextColor(Color.WHITE);
+//                    mBtnCollectConfirm.setBackgroundResource(R.drawable.button_selector);
                     List<User> listUsers = FaceApi.getInstance().getUserListByUserName(s.toString());
                     if (listUsers != null && listUsers.size() > 0) {     // 出现用户名重复
                         mTextError.setVisibility(View.VISIBLE);
-                        mBtnCollectConfirm.setEnabled(false);
+//                        mBtnCollectConfirm.setEnabled(false);
+
                     } else {
                         mTextError.setVisibility(View.INVISIBLE);
-                        mBtnCollectConfirm.setEnabled(true);
+//                        mBtnCollectConfirm.setEnabled(true);
                     }
                 } else {
-                    mImageInputClear.setVisibility(View.GONE);
-                    mBtnCollectConfirm.setEnabled(false);
-                    mBtnCollectConfirm.setTextColor(Color.parseColor("#666666"));
-                    mBtnCollectConfirm.setBackgroundResource(R.mipmap.btn_all_d);
+//                    mImageInputClear.setVisibility(View.GONE);
+//                    mBtnCollectConfirm.setEnabled(false);
+//                    mBtnCollectConfirm.setTextColor(Color.parseColor("#666666"));
+//                    mBtnCollectConfirm.setBackgroundResource(R.mipmap.btn_all_d);
                 }
             }
 
@@ -176,7 +189,72 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
             }
         });
+
+
+        mEditCardNumber.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int i, int i1, int i2) {
+                if (s.length() > 0) {
+//                    mImageInputClear.setVisibility(View.VISIBLE);
+//                    mBtnCollectConfirm.setEnabled(true);
+//                    mBtnCollectConfirm.setTextColor(Color.WHITE);
+//                    mBtnCollectConfirm.setBackgroundResource(R.drawable.button_selector);
+                    String userCard = FaceApi.getInstance().getUserCardByUserCard(s.toString().trim());
+                    if (userCard.equals(s.toString().trim())) {
+                        // 出现卡号重复
+                        mCardError.setVisibility(View.VISIBLE);
+//                        mBtnCollectConfirm.setEnabled(false);
+                    } else {
+                        mCardError.setVisibility(View.INVISIBLE);
+//                        mBtnCollectConfirm.setEnabled(true);
+                    }
+                } else {
+//                    mImageInputClear.setVisibility(View.GONE);
+//                    mBtnCollectConfirm.setEnabled(false);
+//                    mBtnCollectConfirm.setTextColor(Color.parseColor("#666666"));
+//                    mBtnCollectConfirm.setBackgroundResource(R.mipmap.btn_all_d);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
     }
+
+    /**
+     * 监听文本内容
+     */
+    public class TextChange implements TextWatcher {
+
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            if (mEditName.length() > 0 && mEditCardNumber.length() > 0) {
+                mImageInputClear.setVisibility(View.VISIBLE);
+                mBtnCollectConfirm.setEnabled(true);
+                mBtnCollectConfirm.setTextColor(Color.WHITE);
+                mBtnCollectConfirm.setBackgroundResource(R.drawable.button_selector);
+            } else {
+                mImageInputClear.setVisibility(View.GONE);
+                mBtnCollectConfirm.setEnabled(false);
+                mBtnCollectConfirm.setTextColor(Color.parseColor("#666666"));
+                mBtnCollectConfirm.setBackgroundResource(R.mipmap.btn_all_d);
+            }
+        }
+    }
+
 
     @Override
     protected void onResume() {
@@ -197,6 +275,12 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             }
             mCropBitmap = null;
         }
+
+        //销毁时移除监听
+        if (mEditName != null && mEditCardNumber != null) {
+            mEditName.removeTextChangedListener(mTextChange);
+            mEditCardNumber.removeTextChangedListener(mTextChange);
+        }
     }
 
     /**
@@ -204,9 +288,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
      */
     private void startCameraPreview() {
         // 设置前置摄像头
-        if (SingleBaseConfig.getBaseConfig().getRBGCameraId() != -1){
+        if (SingleBaseConfig.getBaseConfig().getRBGCameraId() != -1) {
             CameraPreviewManager.getInstance().setCameraFacing(SingleBaseConfig.getBaseConfig().getRBGCameraId());
-        }else {
+        } else {
             CameraPreviewManager.getInstance().setCameraFacing(CameraPreviewManager.CAMERA_FACING_FRONT);
         }
         // 设置后置摄像头
@@ -239,6 +323,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         // 摄像头预览数据进行人脸检测
         int liveType = SingleBaseConfig.getBaseConfig().getType();
         // int liveType = 2;
+//        Log.i(TAG, "脱机状态人脸录入类别: " + SingleBaseConfig.getBaseConfig().getType());
 
         if (liveType == 0) { // 无活体检测
             FaceTrackManager.getInstance().setAliving(false);
@@ -261,12 +346,12 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                         if (mFaceRoundProView == null) {
                             return;
                         }
-                        if (code == 0){
+                        if (code == 0) {
                             mFaceRoundProView.setTipText("请保持面部在取景框内");
-                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
-                        }else {
+                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
+                        } else {
                             mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                         }
                     }
                 });
@@ -295,14 +380,14 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
                 if (livenessModel == null || livenessModel.getFaceInfo() == null) {
                     mFaceRoundProView.setTipText("请保持面部在取景框内");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
                     return;
                 }
-                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
+                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
 
-                if (livenessModel.getFaceSize() > 1){
+                if (livenessModel.getFaceSize() > 1) {
                     mFaceRoundProView.setTipText("请保证取景框内只有一个人脸");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     return;
                 }
 
@@ -330,7 +415,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
                 if (mPointXY[2] < 50 || mPointXY[3] < 50) {
                     mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     // 释放内存
                     destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                     return;
@@ -338,7 +423,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
                 if (mPointXY[2] > previewWidth || mPointXY[3] > previewWidth) {
                     mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     // 释放内存
                     destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                     return;
@@ -349,7 +434,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                         || mPointXY[1] - mPointXY[3] / 2 < topLimitY
                         || mPointXY[1] + mPointXY[3] / 2 > bottomLimitY) {
                     mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     // 释放内存
                     destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                     return;
@@ -382,9 +467,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         int liveType = SingleBaseConfig.getBaseConfig().getType();
         // int liveType = 2;
 
-        if (! livenessModel.isQualityCheck()){
+        if (!livenessModel.isQualityCheck()) {
             mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
             return;
         } else if (liveType == 0) {         // 无活体
             getFeatures(livenessModel);
@@ -394,7 +479,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             // Log.e(TAG, "score = " + rgbLivenessScore);
             if (rgbLivenessScore < liveThreadHold) {
                 mFaceRoundProView.setTipText("请保证采集对象为真人");
-                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                 // 释放内存
                 destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                 return;
@@ -442,7 +527,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     private void displayCompareResult(float ret, byte[] faceFeature, LivenessModel model) {
         if (model == null) {
             mFaceRoundProView.setTipText("请保持面部在取景框内");
-            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
+            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
             return;
         }
 
@@ -456,7 +541,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                             2.0f, false, isOutoBoundary);
             if (cropInstance == null) {
                 mFaceRoundProView.setTipText("抠图失败");
-                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                 // 释放内存
                 destroyImageInstance(model.getBdFaceImageInstanceCrop());
                 return;
@@ -480,7 +565,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             }
         } else {
             mFaceRoundProView.setTipText("特征提取失败");
-            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
         }
     }
 
@@ -510,6 +595,17 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 //                    ToastUtils.toast(getApplicationContext(), "用户名长度不得大于10位");
 //                    return;
 //                }
+            String cardNumber = mEditCardNumber.getText().toString();
+            if (TextUtils.isEmpty(cardNumber)) {
+                ToastUtils.toast(getApplicationContext(), "请输入用户卡号");
+                return;
+            }
+            if (cardNumber.length() > 8) {
+                ToastUtils.toast(getApplicationContext(), "用户名长度不得大于8位");
+                return;
+            }
+
+
             // 姓名过滤
             String nameResult = FaceApi.getInstance().isValidName(userName);
             if (!"0".equals(nameResult)) {
@@ -519,7 +615,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             String imageName = userName + ".jpg";
             // 注册到人脸库
             boolean isSuccess = FaceApi.getInstance().registerUserIntoDBmanager(null,
-                    userName, imageName, null, mFeatures);
+                    userName, "", cardNumber, mFeatures);
             if (isSuccess) {
                 // 保存人脸图片
                 File faceDir = FileUtils.getBatchImportSuccessDirectory();
@@ -543,6 +639,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             mCollectSuccess = false;
             mFaceRoundProView.setTipText("");
             mEditName.setText("");
+            mEditCardNumber.setText("");
         } else if (id == R.id.btn_return_home) {       // 回到首页
             // 关闭摄像头
             CameraPreviewManager.getInstance().stopPreview();
@@ -568,5 +665,6 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         }
         return super.dispatchTouchEvent(ev);
     }
+
 
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -7,7 +8,7 @@
         android:id="@+id/view_line"
         android:layout_width="match_parent"
         android:layout_height="0.3dp"
-        android:background="#333333"/>
+        android:background="#333333" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -15,42 +16,49 @@
         android:layout_below="@id/view_line"
         android:paddingTop="15dp"
         android:paddingBottom="15dp">
+
         <CheckBox
             android:id="@+id/check_btn"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_centerVertical="true"
             android:layout_marginLeft="15dp"
-            android:visibility="gone"
+            android:background="@drawable/checkbox_selector"
             android:button="@null"
             android:checked="false"
             android:clickable="false"
             android:focusable="false"
-            android:background="@drawable/checkbox_selector"
-            android:focusableInTouchMode="false"/>
+            android:focusableInTouchMode="false"
+            android:visibility="gone" />
 
         <com.baidu.idl.main.facesdk.registerlibrary.user.view.CircleImageView
             android:id="@+id/circle_user"
-            android:layout_toRightOf="@id/check_btn"
-            android:layout_marginLeft="18dp"
             android:layout_width="40dp"
-            android:layout_height="40dp" />
+            android:layout_height="40dp"
+            android:layout_marginLeft="18dp"
+            android:layout_toRightOf="@id/check_btn" />
 
         <TextView
             android:id="@+id/text_user_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_toRightOf="@id/circle_user"
             android:layout_marginLeft="15dp"
+            android:layout_toRightOf="@id/circle_user"
+            android:textColor="@color/white"
             android:textSize="18sp"
-            android:textColor="@color/white"/>
+            tools:text="jimmy" />
 
         <TextView
             android:id="@+id/text_user_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="20dp"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            tools:text="123456" />
 
         <TextView
             android:id="@+id/text_user_ctime"

@@ -74,6 +74,8 @@ public class FaceUserAdapter extends RecyclerView.Adapter<FaceUserAdapter.FaceUs
         }
         // 添加数据
         holder.textUserName.setText(mList.get(position).getUserName());
+        //卡号
+        holder.textUserInfo.setText(mList.get(position).getUserInfo());
         Bitmap bitmap = BitmapFactory.decodeFile(FileUtils.getBatchImportSuccessDirectory()
                 + "/" + mList.get(position).getImageName());
         Bitmap descBmp = BitmapUtils.calculateInSampleSize(bitmap, 100, 100);
@@ -103,10 +105,12 @@ public class FaceUserAdapter extends RecyclerView.Adapter<FaceUserAdapter.FaceUs
         }
         return true;
     }
+
     protected static class FaceUserViewHolder extends RecyclerView.ViewHolder {
         private View itemView;
         private CircleImageView circleUserHead;
         private TextView textUserName;
+        private TextView textUserInfo;
         private CheckBox checkView;
         private View viewLine;
 
@@ -115,6 +119,7 @@ public class FaceUserAdapter extends RecyclerView.Adapter<FaceUserAdapter.FaceUs
             this.itemView = itemView;
             circleUserHead = itemView.findViewById(R.id.circle_user);
             textUserName = itemView.findViewById(R.id.text_user_name);
+            textUserInfo = itemView.findViewById(R.id.text_user_info);
             checkView = itemView.findViewById(R.id.check_btn);
             viewLine = itemView.findViewById(R.id.view_line);
         }

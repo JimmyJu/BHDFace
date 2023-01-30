@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -125,12 +126,19 @@ public class Utils {
 
     public static String byteToHex(byte[] bytes) {
         String strHex = "";
+        String strData = "";
         StringBuilder sb = new StringBuilder("");
         for (int n = 0; n < bytes.length; n++) {
             strHex = Integer.toHexString(bytes[n] & 0xFF);
             sb.append((strHex.length() == 1) ? "0" + strHex : strHex); // 每个字节由两个字符表示，位数不够，高位补0
         }
-        return sb.toString().trim();
+//        return sb.toString().trim();
+        try {
+            strData = new String(sb.toString().getBytes("GB2312"), "GB2312");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return strData.trim();
     }
 
 
@@ -169,7 +177,6 @@ public class Utils {
     }
 
     /**
-     *
      * @param time 分、时 加零（24小时制）
      * @return
      */
@@ -177,7 +184,7 @@ public class Utils {
         String times = null;
         if (time.length() == 1) {
             times = "0" + time;
-        }else if (time.length() == 2){
+        } else if (time.length() == 2) {
             times = time;
         }
         return times;

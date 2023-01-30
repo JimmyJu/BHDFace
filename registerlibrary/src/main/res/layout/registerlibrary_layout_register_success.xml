@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:src="@mipmap/ic_mask_success"/>
+            android:src="@mipmap/ic_mask_success" />
 
         <ImageView
             android:layout_width="wrap_content"
@@ -42,11 +42,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/relative_reg_suc_head"
-        android:layout_marginTop="24dp"
         android:layout_centerHorizontal="true"
-        android:textSize="22sp"
+        android:layout_marginTop="24dp"
+        android:text="人脸注册成功"
         android:textColor="#00BAF2"
-        android:text="人脸注册成功"/>
+        android:textSize="22sp" />
 
     <Button
         android:id="@+id/btn_return_home"

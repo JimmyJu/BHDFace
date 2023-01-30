@@ -21,7 +21,7 @@ public class DBHelper extends SQLiteOpenHelper {
     /**
      * 数据库版本
      */
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     /**
      * 人脸特征表
      */

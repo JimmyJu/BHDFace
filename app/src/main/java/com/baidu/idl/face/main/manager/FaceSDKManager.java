@@ -377,7 +377,7 @@ public class FaceSDKManager {
         if (faceDetect != null) {
             BDFaceSDKConfig config = new BDFaceSDKConfig();
             // TODO: 最小人脸个数检查，默认设置为1,用户根据自己需求调整
-            config.maxDetectNum = 2;
+            config.maxDetectNum = 1;
 
             // TODO: 默认为80px。可传入大于30px的数值，小于此大小的人脸不予检测，生效时间第一次加载模型
             config.minFaceSize = SingleBaseConfig.getBaseConfig().getMinimumFace();

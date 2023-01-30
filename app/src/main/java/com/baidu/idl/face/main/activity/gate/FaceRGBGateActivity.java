@@ -128,6 +128,10 @@ public class FaceRGBGateActivity extends BaseActivity {
     private String startTime;
     private String endTime;
     private int beginHour, beginMin, endHour, endMin;
+
+    private String startTime2;
+    private String endTime2;
+    private int beginHour2, beginMin2, endHour2, endMin2;
     //监听时间戳线程标识
     private boolean timeFlagBool = true;
 
@@ -330,10 +334,12 @@ public class FaceRGBGateActivity extends BaseActivity {
         //初始化数据
         initData();
 
-        //监听时间
-        if (SingleBaseConfig.getBaseConfig().getLightSwitch() == 1) {
+        //监听时间值
+        if (SingleBaseConfig.getBaseConfig().getLightSwitch() == 1 ||
+                SingleBaseConfig.getBaseConfig().getLightSwitchSecond() == 1) {
             monitorTimestamp();
-        } else if (SingleBaseConfig.getBaseConfig().getLightSwitch() == 0) {
+        } else if (SingleBaseConfig.getBaseConfig().getLightSwitch() == 0 ||
+                SingleBaseConfig.getBaseConfig().getLightSwitchSecond() == 0) {
             mGPIOManager.pullDownWhiteLight();
         }
 
@@ -376,13 +382,33 @@ public class FaceRGBGateActivity extends BaseActivity {
         new Thread(() -> {
             while (timeFlagBool) {
                 try {
-                    Thread.sleep(1000);
-                    if (DateUtil.atTheCurrentTime(beginHour, beginMin, endHour, endMin)) {
+                    Thread.sleep(2000);
+                    if (DateUtil.atTheCurrentTime(beginHour, beginMin, endHour, endMin) || DateUtil.atTheCurrentTime(beginHour2, beginMin2, endHour2, endMin2)) {
                         //true表示范围内   否则false
-                        mGPIOManager.pullUpWhiteLight();
+                        if (mGPIOManager.getWhiteLightStatus().trim().equals("0")) {
+                            mGPIOManager.pullUpWhiteLight();
+                            Log.e("TAG", "timestamp-------白灯状态: " + mGPIOManager.getWhiteLightStatus().trim());
+                        }
+
+                        //2
+
+
+//                        if (SingleBaseConfig.getBaseConfig().getLightSwitchSecond() == 1) {
+//                            if (DateUtil.atTheCurrentTime(beginHour2, beginMin2, endHour2, endMin2)) {
+//                                //true表示范围内   否则false
+//                                if (mGPIOManager.getWhiteLightStatus().trim().equals("0")) {
+//                                    mGPIOManager.pullUpWhiteLight();
+////                                Log.e("TAG", "timestamp-------白灯状态: " + mGPIOManager.getWhiteLightStatus().trim());
+//                                }
+//                            }
+//                        }
                     } else {
-                        mGPIOManager.pullDownWhiteLight();
+                        if (!mGPIOManager.getWhiteLightStatus().trim().equals("0")) {
+                            mGPIOManager.pullDownWhiteLight();
+                            Log.e("TAG", "timestamp-------白灯状态: " + mGPIOManager.getWhiteLightStatus().trim());
+                        }
                     }
+
                    /* if (DateUtil.getTimeShort().equals(startTime)) {
 //                        Log.d("TAG", "开启时间: " + DateUtil.getTimeShort());
                         manager.pullUpWhiteLight();
@@ -399,6 +425,7 @@ public class FaceRGBGateActivity extends BaseActivity {
         }).start();
     }
 
+
     private void initData() {
         //加载二维码提示音
         mSoundPoolUtil = new SoundPoolUtil();
@@ -408,6 +435,9 @@ public class FaceRGBGateActivity extends BaseActivity {
         String light_start = (String) SPUtils.get(this, "light_start", "");
         String light_end = (String) SPUtils.get(this, "light_end", "");
 
+        String light_start2 = (String) SPUtils.get(this, "light_start2", "23:59");
+        String light_end2 = (String) SPUtils.get(this, "light_end2", "00:00");
+
         if (light_start != null && light_end != null) {
             startTime = light_start;
             endTime = light_end;
@@ -416,7 +446,19 @@ public class FaceRGBGateActivity extends BaseActivity {
                 beginMin = Integer.parseInt(startTime.substring(startTime.lastIndexOf(":") + 1));
                 endHour = Integer.parseInt(endTime.substring(0, endTime.indexOf(":")));
                 endMin = Integer.parseInt(endTime.substring(endTime.lastIndexOf(":") + 1));
-                Log.e("TAG", "时间范围: " + beginHour + ":" + beginMin + "----" + endHour + ":" + endMin);
+                Log.e("TAG", "第一阶段时间范围: " + beginHour + ":" + beginMin + "----" + endHour + ":" + endMin);
+            }
+        }
+
+        if (light_start2 != null && light_end2 != null) {
+            startTime2 = light_start2;
+            endTime2 = light_end2;
+            if (!startTime2.isEmpty() && !endTime2.isEmpty()) {
+                beginHour2 = Integer.parseInt(startTime2.substring(0, startTime2.indexOf(":")));
+                beginMin2 = Integer.parseInt(startTime2.substring(startTime2.lastIndexOf(":") + 1));
+                endHour2 = Integer.parseInt(endTime2.substring(0, endTime2.indexOf(":")));
+                endMin2 = Integer.parseInt(endTime2.substring(endTime2.lastIndexOf(":") + 1));
+                Log.e("TAG", "第二阶段时间范围: " + beginHour2 + ":" + beginMin2 + "----" + endHour2 + ":" + endMin2);
             }
         }
 
@@ -2037,6 +2079,10 @@ public class FaceRGBGateActivity extends BaseActivity {
             // 回收并且置为null
             mRBmp.recycle();
             mRBmp = null;
+        }
+
+        if (receiveSocket != null) {
+            receiveSocket.close();
         }
 
         //关闭所有补光灯

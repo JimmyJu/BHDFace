@@ -58,10 +58,10 @@
 
 
         <LinearLayout
-            android:layout_marginLeft="@dimen/gate_30_dp"
-            android:layout_marginRight="@dimen/gate_30_dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/gate_30_dp"
+            android:layout_marginRight="@dimen/gate_30_dp"
             android:background="@drawable/sr_liner_rectangle"
             android:orientation="vertical">
 
@@ -73,15 +73,15 @@
                 <TextView
                     style="@style/configTextStyle"
                     android:layout_height="wrap_content"
-                    android:text="离线资源导入(图片命名及格式：张三-12345678.jpg)" />
+                    android:text="离线资源导入  (图片命名及格式 例如：张三-12345678.jpg)" />
 
                 <LinearLayout style="@style/configInnerImageLayout">
 
                     <TextView
                         style="@style/configTextStyleTwo"
                         android:layout_marginRight="10dp"
-                        android:visibility="gone"
-                        android:text="270" />
+                        android:text="270"
+                        android:visibility="gone" />
 
                     <ImageView style="@style/configInnerImage" />
                 </LinearLayout>
@@ -91,6 +91,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0.3dp"
                 android:background="#333333" />
+
             <LinearLayout
                 android:id="@+id/personnel_database_management"
                 android:layout_width="match_parent"
@@ -106,14 +107,39 @@
                     <TextView
                         style="@style/configTextStyleTwo"
                         android:layout_marginRight="10dp"
-                        android:visibility="gone"
-                        android:text="270" />
+                        android:text="270"
+                        android:visibility="gone" />
 
                     <ImageView style="@style/configInnerImage" />
                 </LinearLayout>
             </LinearLayout>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.3dp"
+                android:background="#333333" />
 
+            <LinearLayout
+                android:id="@+id/offline_face_entry"
+                android:layout_width="match_parent"
+                android:layout_height="60dp">
+
+                <TextView
+                    style="@style/configTextStyle"
+                    android:layout_height="wrap_content"
+                    android:text="脱机人脸录入" />
+
+                <LinearLayout style="@style/configInnerImageLayout">
+
+                    <TextView
+                        style="@style/configTextStyleTwo"
+                        android:layout_marginRight="10dp"
+                        android:text="270"
+                        android:visibility="gone" />
+
+                    <ImageView style="@style/configInnerImage" />
+                </LinearLayout>
+            </LinearLayout>
 
         </LinearLayout>
 

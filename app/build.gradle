@@ -7,8 +7,8 @@ android {
         applicationId "com.baidu.idl.face.demo"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 7
-        versionName "8.0.1"
+        versionCode 8
+        versionName "8.0.3"
         multiDexEnabled true
 
         /*ndk {
