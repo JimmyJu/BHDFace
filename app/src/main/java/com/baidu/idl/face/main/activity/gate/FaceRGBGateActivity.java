@@ -1,6 +1,8 @@
 package com.baidu.idl.face.main.activity.gate;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
@@ -607,6 +609,16 @@ public class FaceRGBGateActivity extends BaseActivity {
             @Override
             public void onChanged(@Nullable Integer num) {
                 mSendTextView.setText("" + num);
+            }
+        });
+
+        LiveDataBus.get().with("reboot", Boolean.class).observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean reboot) {
+                Log.e("TAG", "reboot-------------------------------->: " + reboot);
+                if (reboot) {
+                    restartApp();
+                }
             }
         });
     }
@@ -2052,6 +2064,15 @@ public class FaceRGBGateActivity extends BaseActivity {
             mSoundPool.release();
             mSoundPool = null;
         }
+    }
+
+    private void restartApp() {
+        Intent intent = mContext.getPackageManager()
+                .getLaunchIntentForPackage(mContext.getPackageName());
+        PendingIntent restartIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        AlarmManager mgr = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 1000, restartIntent); // 1秒钟后重启应用
+        System.exit(0);
     }
 
     @Override

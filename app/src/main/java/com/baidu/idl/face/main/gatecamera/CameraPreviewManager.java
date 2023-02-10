@@ -3,6 +3,7 @@ package com.baidu.idl.face.main.gatecamera;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.os.Handler;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
@@ -10,6 +11,7 @@ import android.view.TextureView;
 
 import com.baidu.idl.face.main.callback.CameraDataCallback;
 import com.baidu.idl.face.main.model.SingleBaseConfig;
+import com.baidu.idl.face.main.utils.LiveDataBus;
 
 import java.util.List;
 
@@ -35,6 +37,8 @@ public class CameraPreviewManager implements TextureView.SurfaceTextureListener 
     public static final int CAMERA_USB = 2;
 
     public static final int CAMERA_ORBBEC = 3;
+
+    private final Handler handler = new Handler();
 
     /**
      * 垂直方向
@@ -279,7 +283,13 @@ public class CameraPreviewManager implements TextureView.SurfaceTextureListener 
                 Log.e(TAG, e.getMessage());
             }
         } catch (RuntimeException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, "相机运行时Exception：" + e.getMessage());
+            //延迟两秒重启程序
+            handler.postDelayed(() -> {
+//                stopPreview();
+                LiveDataBus.get().with("reboot").postValue(true);
+//                openCamera();
+            }, 2000);
         }
     }
 
