@@ -2,6 +2,7 @@ package com.baidu.idl.face.main.setting;
 
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -70,11 +71,13 @@ public class VersionMessageActivity extends BaseActivity {
             String newSubstringDeviceID = newString.substring(newString.length() - 6);
 
 //            current_device_ip.setText(substringDeviceID + getString(R.string.ip_info) + newSubstringDeviceID);
-            current_device_ip.setText(String.format(getString(R.string.ip_info),substringDeviceID,newSubstringDeviceID));
+            current_device_ip.setText(String.format(getString(R.string.ip_info), substringDeviceID, newSubstringDeviceID));
         }
 
         //当前许可证
-        current_license_key.setText(bdFaceLicenseAuthInfo.licenseKey);
+        current_license_key.setText("当前序列号：" + bdFaceLicenseAuthInfo.licenseKey + "\n人脸设备硬件指纹: " + bdFaceLicenseAuthInfo.deviceId);
+
+        Log.d("TAG", "人脸设备硬件指纹: " + bdFaceLicenseAuthInfo.deviceId + "----当前序列号：" + bdFaceLicenseAuthInfo.licenseKey);
 
         buttonVersionSave.setOnClickListener(new View.OnClickListener() {
             @Override

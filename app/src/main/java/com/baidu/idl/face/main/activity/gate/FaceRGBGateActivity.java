@@ -655,7 +655,7 @@ public class FaceRGBGateActivity extends BaseActivity {
                                     public void onFaceDetectCallback(LivenessModel livenessModel) {
                                         // 预览模式
 //                                        Log.e("TAG", "时间戳: " + (Long.parseLong(DateUtil.timeStamp()) - Long.parseLong(timeFlag)));
-                                        if (Long.parseLong(DateUtil.timeStamp()) - Long.parseLong(timeFlag) > 1) {
+                                        if (Long.parseLong(DateUtil.timeStamp()) - Long.parseLong(timeFlag) > 0.5) {
                                             timeFlag = DateUtil.timeStamp();
                                             checkCloseDebugResult(livenessModel, width, height);
                                         }

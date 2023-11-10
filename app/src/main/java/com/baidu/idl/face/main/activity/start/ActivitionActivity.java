@@ -13,6 +13,7 @@ import android.os.Vibrator;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.ReplacementTransformationMethod;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 
 import com.baidu.idl.face.main.activity.BaseActivity;
 import com.baidu.idl.face.main.utils.LiveDataBus;
@@ -88,6 +90,8 @@ public class ActivitionActivity extends BaseActivity implements View.OnClickList
         // 点击激活按钮3次无响应弹出popupwindow
         initPopupWindow();
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+
     }
 
     private void initPopupWindow() {
@@ -135,6 +139,8 @@ public class ActivitionActivity extends BaseActivity implements View.OnClickList
         // 复制序列码
         accredit_deviceTv = findViewById(R.id.accredit_deviceTv);
         accredit_deviceTv.setText(faceAuth.getDeviceId(this));
+
+        Log.d("TAG", "人脸设备硬件指纹: " + faceAuth.getDeviceId(this));
 
         // 长按点击复制
         accredit_deviceTv.setOnLongClickListener(new View.OnLongClickListener() {
